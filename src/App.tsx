@@ -1,0 +1,909 @@
+import {
+  activeSession,
+  categories,
+  academicRank,
+  roomNames,
+  type Location,
+  type Interior,
+} from "./domain/sessions";
+import {
+  SessionPage,
+  CurriculumPage,
+  FinishSessionDialog,
+  useSessionClock,
+  timeLabel,
+} from "./ui/SessionPages";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { Library, type Celebration } from "./game/Library";
+import { progression, type State, type Action } from "./domain/model";
+import { parseSave, serializeSave, MAX_SAVE_BYTES } from "./domain/save";
+import { Repository } from "./persistence/repository";
+import { FolioContent, tabs, type Tab, type Editor } from "./ui/Folio";
+import { EditorDialog } from "./ui/Editor";
+import {
+  preference,
+  remember,
+  useMotion,
+  useAnimatedNumber,
+  prepareChime,
+  chime,
+} from "./ui/preferences";
+import type { Interaction } from "./game/movement";
+const repository = new Repository();
+const channel =
+  typeof BroadcastChannel !== "undefined"
+    ? new BroadcastChannel("library-save")
+    : null;
+export default function App() {
+  const [state, setState] = useState<State>();
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<Tab | null>(null);
+  const [editor, setEditor] = useState<Editor | null>(null);
+  const [celebration, setCelebration] = useState<Celebration | null>(null);
+  const [pendingImport, setPendingImport] = useState<State | null>(null);
+  const [pastedSave, setPastedSave] = useState("");
+  const [muted, setMuted] = useState(
+    () => preference("university-muted", "true") !== "false",
+  );
+  const motion = useMotion();
+  const [location, setLocation] = useState<Location>("university");
+  const [day, setDay] = useState(() => preference("university-day", "system"));
+  const [parallax, setParallax] = useState(() =>
+    Number(preference("university-parallax", "0.6")),
+  );
+  const [finishing, setFinishing] = useState(false);
+  const currentSession = state ? activeSession(state) : undefined;
+  const [clockEpoch, setClockEpoch] = useState(0);
+  const clock = useSessionClock(currentSession, clockEpoch);
+  function visit(next: Location) {
+    setLocation(next);
+    setTab(null);
+    setPendingImport(null);
+    setAmbient(false);
+  }
+  function changeDay(next: string) {
+    setDay(next);
+    remember("university-day", next);
+  }
+  function changeParallax(next: number) {
+    setParallax(next);
+    remember("university-parallax", String(next));
+  }
+  useEffect(() => {
+    if (!currentSession || currentSession.phase !== "running") return;
+    const session = currentSession;
+    const checkpoint = () => {
+      void repository
+        .transact({
+          type: "checkpointSession",
+          id: session.id,
+          runId: session.runId,
+          elapsedMs: clock.read(),
+        })
+        .then((next) => {
+          setState(next);
+          channel?.postMessage("saved");
+        })
+        .catch((e) => setError(String(e)));
+    };
+    const id = setInterval(checkpoint, 10000);
+    window.addEventListener("pagehide", checkpoint);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener("pagehide", checkpoint);
+    };
+  }, [currentSession?.id, currentSession?.runId, currentSession?.phase]);
+
+  const [autonomous, setAutonomous] = useState(
+    () => preference("university-autonomy", "true") !== "false",
+  );
+  const [thoughts, setThoughts] = useState(
+    () => preference("university-thoughts", "true") !== "false",
+  );
+  const [ambient, setAmbient] = useState(false);
+  function toggleAutonomy() {
+    setAutonomous((value) => {
+      remember("university-autonomy", String(!value));
+      return !value;
+    });
+  }
+  function toggleThoughts() {
+    setThoughts((value) => {
+      remember("university-thoughts", String(!value));
+      return !value;
+    });
+  }
+  function enterAmbient() {
+    setTab(null);
+    setPendingImport(null);
+    setAmbient(true);
+  }
+
+  const lock = useRef(false);
+  const folioHeading = useRef<HTMLHeadingElement>(null);
+  const file = useRef<HTMLInputElement>(null);
+  const menuOpener = useRef<HTMLElement | null>(null);
+  const [levelNotice, setLevelNotice] = useState("");
+  const shownGold = useAnimatedNumber(state?.gold ?? 0, motion.reduced);
+  const shownXP = useAnimatedNumber(state?.xp ?? 0, motion.reduced);
+  const actual = progression(state?.xp ?? 0),
+    shown = progression(shownXP);
+  useEffect(() => {
+    repository
+      .transact()
+      .then(setState)
+      .catch((e) => setError(String(e)));
+    const refresh = (event?: Event | MessageEvent) => {
+      const restored = !!event && "data" in event && event.data === "restored";
+      repository
+        .transact()
+        .then((next) => {
+          setState(next);
+          if (restored) setClockEpoch((n) => n + 1);
+        })
+        .catch((e) => setError(String(e)));
+    };
+    if (channel) channel.onmessage = refresh;
+    window.addEventListener("focus", refresh);
+    return () => {
+      if (channel) channel.onmessage = null;
+      window.removeEventListener("focus", refresh);
+    };
+  }, []);
+  useEffect(() => {
+    if (!message) return;
+    const timer = setTimeout(() => setMessage(""), 6500);
+    return () => clearTimeout(timer);
+  }, [message]);
+  useEffect(() => {
+    if (!levelNotice) return;
+    const timer = setTimeout(() => setLevelNotice(""), 5000);
+    return () => clearTimeout(timer);
+  }, [levelNotice]);
+  useEffect(() => {
+    if (tab) {
+      folioHeading.current?.focus();
+    } else if (menuOpener.current) {
+      menuOpener.current.focus();
+    }
+  }, [tab]);
+  function open(next: Tab) {
+    setAmbient(false);
+    menuOpener.current = document.activeElement as HTMLElement;
+    setTab(next);
+    setError("");
+  }
+  function closeMenu() {
+    setTab(null);
+    setPendingImport(null);
+  }
+  useEffect(() => {
+    const escape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !editor) {
+        closeMenu();
+      }
+    };
+    window.addEventListener("keydown", escape);
+    return () => window.removeEventListener("keydown", escape);
+  }, [editor]);
+  async function commit(
+    operation: () => Promise<State>,
+    success: string,
+    action?: Action,
+  ) {
+    if (lock.current) return false;
+    lock.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      const next = await operation();
+      const awardedQuest =
+        action?.type === "complete"
+          ? action.id
+          : action?.type === "finishSession" && action.completeQuest
+            ? state?.sessions?.find((x) => x.id === action.id)?.questId
+            : undefined;
+      if (awardedQuest) {
+        const q = next.quests.find((q) => q.id === awardedQuest);
+        const previous = state?.quests.find((q) => q.id === awardedQuest);
+        if (q?.completed && !previous?.completed) {
+          const levelUp = progression(next.xp).level > actual.level;
+          setCelebration({
+            xp: q.completed.xp,
+            gold: q.completed.gold,
+            key: Date.now(),
+            levelUp,
+            level: progression(next.xp).level,
+          });
+          if (!muted) chime(levelUp);
+          if (levelUp)
+            setLevelNotice(
+              `Level ${progression(next.xp).level} · Your curiosity is growing`,
+            );
+        }
+      }
+      setState(next);
+      setMessage(success);
+      if (!action) setClockEpoch((n) => n + 1);
+      channel?.postMessage(action ? "saved" : "restored");
+      return true;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      return false;
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
+  }
+  async function act(action: Action, success: string) {
+    if (
+      !muted &&
+      (action.type === "complete" || action.type === "finishSession")
+    )
+      prepareChime();
+    return commit(() => repository.transact(action), success, action);
+  }
+  function interact(id: Interaction) {
+    if (id === "quests" || id === "discovery" || id === "keepsakes") open(id);
+    else if (id === "door") visit("university");
+    else if (id === "chair")
+      setMessage(
+        "A quiet seat, freely yours. Press a movement key to stand when you’re ready.",
+      );
+  }
+  function toggleMute() {
+    const next = !muted;
+    setMuted(next);
+    remember("university-muted", String(next));
+    if (!next) {
+      prepareChime();
+      chime(false);
+    }
+  }
+  async function exportSave() {
+    if (lock.current) return;
+    lock.current = true;
+    setBusy(true);
+    try {
+      const latest = await repository.transact(
+        currentSession?.phase === "running"
+          ? {
+              type: "checkpointSession",
+              id: currentSession.id,
+              runId: currentSession.runId,
+              elapsedMs: clock.read(),
+            }
+          : undefined,
+      );
+      setState(latest);
+      const blob = new Blob([serializeSave(latest)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `magical-university-save-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setMessage("Your save has been exported. Keep it somewhere safe.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
+  }
+  async function chooseImport(e: ChangeEvent<HTMLInputElement>) {
+    const selected = e.target.files?.[0];
+    e.target.value = "";
+    if (!selected) return;
+    setError("");
+    setPendingImport(null);
+    try {
+      if (selected.size > MAX_SAVE_BYTES)
+        throw Error("Save files must be smaller than 5 MB.");
+      setPendingImport(parseSave(await selected.text()));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  return (
+    <div
+      className={`app ${motion.reduced ? "reduced-motion" : ""} ${ambient ? "ambient-view" : ""}`}
+    >
+      <a className="skip-link" href="#game-menu">
+        Skip to game menus
+      </a>
+      <header className="game-header university-header">
+        <div className="university">
+          <span className="crest" aria-hidden="true">
+            <img src="/university-crest.svg" alt="" />
+          </span>
+          <span>
+            MAGICAL UNIVERSITY<small>working title · your own pace</small>
+          </span>
+        </div>
+        <div className="location-title">
+          <span>☾</span>
+          <h1>
+            {location === "university"
+              ? "Your university"
+              : roomNames[location]}
+          </h1>
+          <span>☾</span>
+        </div>
+        <div className="header-controls">
+          <button
+            className="autonomy-toggle"
+            aria-pressed={autonomous}
+            onClick={toggleAutonomy}
+          >
+            {autonomous ? "Wandering: on" : "Manual only"}
+          </button>
+          <button className="ambient-toggle" onClick={enterAmbient}>
+            Ambient view
+          </button>
+          <button
+            className="sound-button"
+            onClick={toggleMute}
+            aria-pressed={!muted}
+            title={muted ? "Enable gentle reward sounds" : "Mute reward sounds"}
+          >
+            {muted ? "♫ Off" : "♫ On"}
+          </button>
+          <button onClick={() => open("save")} className="save-status">
+            {busy ? "Saving…" : state ? "Saved locally" : "Opening save…"}
+          </button>
+        </div>
+        <nav className="room-navigation" aria-label="University destinations">
+          {(
+            [
+              "university",
+              "grand-library",
+              "personal-study",
+              "observatory",
+            ] as Location[]
+          ).map((id) => (
+            <button
+              key={id}
+              aria-pressed={location === id}
+              onClick={() => visit(id)}
+            >
+              {roomNames[id]}
+            </button>
+          ))}
+        </nav>
+      </header>
+      <main className="game-stage">
+        <Library
+          celebration={celebration}
+          blocked={!!tab || !!editor || finishing}
+          reduced={motion.reduced}
+          autonomous={autonomous}
+          thoughts={thoughts}
+          onInteract={interact}
+          location={location}
+          session={currentSession}
+          parallax={parallax}
+          day={day}
+          onNavigate={visit}
+        />
+        <section
+          className={`rpg-hud ${celebration ? "has-earned" : ""}`}
+          aria-label="Scholar progression"
+        >
+          <div className="hud-portrait" aria-hidden="true">
+            <img src="/scholar-portrait.svg" alt="" />
+          </div>
+          <div className="hud-details">
+            <div className="hud-name">
+              <strong>{academicRank(state?.xp ?? 0)}</strong>
+              <span>LV. {actual.level}</span>
+            </div>
+            <div
+              className="xp-track"
+              role="progressbar"
+              aria-label="Experience toward next level"
+              aria-valuemin={0}
+              aria-valuemax={actual.needed}
+              aria-valuenow={actual.current}
+            >
+              <div
+                style={{ width: `${(shown.current / shown.needed) * 100}%` }}
+              />
+            </div>
+            <div className="hud-numbers">
+              <span>
+                {actual.current} / {actual.needed} XP
+              </span>
+              <strong aria-label={`${state?.gold ?? 0} gold`}>
+                <span aria-hidden="true">
+                  ◈ {shownGold.toLocaleString()} gold
+                </span>
+              </strong>
+            </div>
+          </div>
+        </section>
+
+        {location === "university" && !tab && !ambient && (
+          <section
+            className="university-welcome"
+            aria-label="Welcome to your university"
+          >
+            <span className="eyebrow">A UNIVERSITY OF YOUR OWN</span>
+            <h2>
+              Welcome home,
+              <br />
+              scholar.
+            </h2>
+            <p>A little curiosity. A world that’s yours to discover.</p>
+            <button className="primary" onClick={() => open("sessions")}>
+              Begin a real-world activity
+            </button>
+            <div className="welcome-links">
+              <button className="text-button" onClick={() => open("quests")}>
+                {state?.quests.filter((q) => !q.completed).length ?? 0}{" "}
+                {state?.quests.filter((q) => !q.completed).length === 1
+                  ? "quest"
+                  : "quests"}{" "}
+                in your journal
+              </button>
+              <button
+                className="text-button"
+                onClick={() => open("curriculum")}
+              >
+                Your personal curriculum
+              </button>
+            </div>
+            {!!state?.courses?.filter((c) => c.active).length && (
+              <div className="current-courses">
+                <span className="eyebrow">CURRENT CURIOSITIES</span>
+                {state.courses
+                  .filter((c) => c.active)
+                  .slice(0, 2)
+                  .map((c) => (
+                    <button key={c.id} onClick={() => open("curriculum")}>
+                      {c.title}
+                    </button>
+                  ))}
+              </div>
+            )}
+          </section>
+        )}
+        {currentSession && (
+          <section
+            className="session-indicator"
+            aria-label="Current activity session"
+          >
+            <div>
+              <strong>{currentSession.title}</strong>
+              <span>
+                {timeLabel(clock.elapsedMs)}
+                {currentSession.targetMinutes
+                  ? ` / ${currentSession.targetMinutes}:00`
+                  : ""}{" "}
+                ·{" "}
+                {currentSession.phase === "paused"
+                  ? "Paused"
+                  : currentSession.targetMinutes &&
+                      clock.elapsedMs >= currentSession.targetMinutes * 60000
+                    ? "Focus time reached — finish whenever you’re ready"
+                    : "At your own pace"}
+              </span>
+            </div>
+            <div className="session-controls">
+              <button
+                aria-label={
+                  currentSession.phase === "running"
+                    ? "Pause activity session"
+                    : "Resume activity session"
+                }
+                onClick={() =>
+                  void act(
+                    currentSession.phase === "running"
+                      ? {
+                          type: "pauseSession",
+                          id: currentSession.id,
+                          runId: currentSession.runId,
+                          elapsedMs: clock.read(),
+                        }
+                      : {
+                          type: "resumeSession",
+                          id: currentSession.id,
+                          runId: crypto.randomUUID(),
+                        },
+                    currentSession.phase === "running"
+                      ? "Session paused."
+                      : "Session resumed.",
+                  )
+                }
+              >
+                {currentSession.phase === "running" ? "Pause" : "Resume"}
+              </button>
+              <button onClick={() => setFinishing(true)}>Finish</button>
+              {location !== currentSession.room && (
+                <button onClick={() => visit(currentSession.room)}>
+                  Return to room
+                </button>
+              )}
+            </div>
+          </section>
+        )}
+        {levelNotice && (
+          <div className="level-notice" role="status">
+            ✦ {levelNotice} ✦
+          </div>
+        )}
+        {error && !tab && (
+          <div className="world-error" role="alert">
+            {error}
+            <button onClick={() => open("save")}>Open save settings</button>
+          </div>
+        )}
+        {tab && (
+          <aside
+            id="folio"
+            className="folio"
+            aria-label={tabs.find((t) => t.id === tab)?.label}
+          >
+            <div className="folio-binding" />
+            <div className="folio-top">
+              <div>
+                <span className="eyebrow">THE SCHOLAR’S FOLIO</span>
+                <h2 tabIndex={-1} ref={folioHeading}>
+                  {tabs.find((t) => t.id === tab)?.label}
+                </h2>
+              </div>
+              <button
+                className="close-button"
+                aria-label="Close folio"
+                onClick={closeMenu}
+              >
+                ×
+              </button>
+            </div>
+            <div className="folio-tabs" aria-label="Folio pages">
+              {tabs.map((t) => (
+                <button
+                  key={t.id}
+                  aria-pressed={tab === t.id}
+                  aria-label={t.label}
+                  title={t.label}
+                  onClick={() => open(t.id)}
+                >
+                  {t.icon}
+                </button>
+              ))}
+            </div>
+            <div className="folio-scroll">
+              {error && (
+                <p role="alert" className="error">
+                  {error}
+                </p>
+              )}
+              {!state ? (
+                <p>
+                  Opening your saved journal…{" "}
+                  <button
+                    className="text-button"
+                    onClick={() => window.location.reload()}
+                  >
+                    Retry
+                  </button>
+                </p>
+              ) : tab === "sessions" ? (
+                <SessionPage
+                  state={state}
+                  busy={busy}
+                  act={act}
+                  go={visit}
+                  elapsed={clock.elapsedMs}
+                  finish={() => setFinishing(true)}
+                />
+              ) : tab === "curriculum" ? (
+                <CurriculumPage
+                  state={state}
+                  busy={busy}
+                  act={act}
+                  go={visit}
+                />
+              ) : tab === "save" ? (
+                <div className="save-menu">
+                  <p className="folio-intro">
+                    Keep your progress close. This university lives on your
+                    device.
+                  </p>
+                  <section>
+                    <h3>The scholar’s day</h3>
+                    <label className="check-label">
+                      <input
+                        type="checkbox"
+                        checked={autonomous}
+                        onChange={toggleAutonomy}
+                      />
+                      Autonomous activities
+                    </label>
+                    <label className="check-label">
+                      <input
+                        type="checkbox"
+                        checked={thoughts}
+                        onChange={toggleThoughts}
+                      />
+                      Occasional thought bubbles
+                    </label>
+                    <p className="small-note">
+                      Manual movement takes the lead. She resumes her day after
+                      about 20 seconds without movement. Activities never earn
+                      XP or gold.
+                    </p>
+                    <button className="secondary" onClick={enterAmbient}>
+                      Enjoy ambient view
+                    </button>
+                  </section>
+                  <section>
+                    <h3>Sound & atmosphere</h3>
+                    <label>
+                      University atmosphere
+                      <select
+                        value={day}
+                        onChange={(e) => changeDay(e.target.value)}
+                      >
+                        <option value="system">Follow local time of day</option>
+                        <option value="morning">Morning</option>
+                        <option value="afternoon">Afternoon</option>
+                        <option value="twilight">Twilight</option>
+                        <option value="night">Nighttime</option>
+                      </select>
+                    </label>
+                    <label>
+                      Entrance parallax
+                      <select
+                        value={parallax}
+                        onChange={(e) => changeParallax(Number(e.target.value))}
+                      >
+                        <option value={0}>Off</option>
+                        <option value={0.3}>Very gentle</option>
+                        <option value={0.6}>Gentle</option>
+                        <option value={1}>Full</option>
+                      </select>
+                    </label>
+                    <label className="check-label">
+                      <input
+                        type="checkbox"
+                        checked={!muted}
+                        onChange={toggleMute}
+                      />
+                      Gentle reward chimes
+                    </label>
+                    <label>
+                      Motion
+                      <select
+                        value={motion.mode}
+                        onChange={(e) => motion.setMode(e.target.value)}
+                      >
+                        <option value="system">Follow system preference</option>
+                        <option value="reduced">Reduced motion</option>
+                        <option value="full">Ambient animation</option>
+                      </select>
+                    </label>
+                    <p className="small-note">
+                      Reduced motion keeps walking controls, with still poses
+                      and quiet, static celebrations.
+                    </p>
+                  </section>
+                  <section>
+                    <h3>Your save book</h3>
+                    <p>
+                      Export a JSON copy before moving browsers or clearing
+                      storage.
+                    </p>
+                    <button
+                      className="primary"
+                      disabled={busy}
+                      onClick={() => void exportSave()}
+                    >
+                      Export save
+                    </button>
+                    <button
+                      className="secondary"
+                      disabled={busy}
+                      onClick={() => file.current?.click()}
+                    >
+                      Choose JSON to import
+                    </button>
+                    <input
+                      className="sr-only"
+                      type="file"
+                      accept=".json,application/json"
+                      ref={file}
+                      onChange={chooseImport}
+                      aria-label="Import JSON save"
+                    />
+                    <details className="paste-import">
+                      <summary>Import from pasted JSON</summary>
+                      <label>
+                        Save JSON
+                        <textarea
+                          rows={5}
+                          maxLength={MAX_SAVE_BYTES}
+                          value={pastedSave}
+                          onChange={(e) => setPastedSave(e.target.value)}
+                          spellCheck={false}
+                        />
+                      </label>
+                      <button
+                        className="secondary"
+                        disabled={busy || !pastedSave.trim()}
+                        onClick={() => {
+                          setError("");
+                          setPendingImport(null);
+                          try {
+                            setPendingImport(parseSave(pastedSave));
+                          } catch (e) {
+                            setError(
+                              e instanceof Error ? e.message : String(e),
+                            );
+                          }
+                        }}
+                      >
+                        Review pasted save
+                      </button>
+                    </details>
+                    {pendingImport && (
+                      <div className="import-preview">
+                        <h4>Review this save</h4>
+                        <p>
+                          Level {progression(pendingImport.xp).level} ·{" "}
+                          {pendingImport.xp} XP · {pendingImport.gold} gold
+                        </p>
+                        <p>
+                          {pendingImport.quests.length} quests ·{" "}
+                          {pendingImport.history.length} redemptions ·{" "}
+                          {pendingImport.discoveries?.length ?? 0} discoveries
+                        </p>
+                        <p>
+                          Import replaces your current journal. A recovery copy
+                          of your current progress will be saved on this device
+                          first.
+                        </p>
+                        <div className="dialog-actions">
+                          <button
+                            className="text-button"
+                            onClick={() => setPendingImport(null)}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            className="primary"
+                            disabled={busy}
+                            onClick={async () => {
+                              if (
+                                await commit(
+                                  () => repository.restore(pendingImport),
+                                  "Your save has been imported. The previous journal is kept as a recovery copy.",
+                                )
+                              )
+                                setPendingImport(null);
+                            }}
+                          >
+                            Import this save
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    <button
+                      className="text-button recovery"
+                      disabled={busy}
+                      onClick={() => {
+                        if (
+                          confirm(
+                            "Restore the journal saved before your last import? Your current journal will become the recovery copy.",
+                          )
+                        )
+                          void commit(
+                            () => repository.recover(),
+                            "Previous journal restored.",
+                          );
+                      }}
+                    >
+                      Restore pre-import save
+                    </button>
+                    <p className="small-note">
+                      The browser, profile and localhost port identify your
+                      save. No data is sent to a server.
+                    </p>
+                  </section>
+                  <section>
+                    <h3>Library controls</h3>
+                    <p>
+                      Click the room to focus it. Use WASD or arrow keys to
+                      wander. Press E or Space near an object to interact. Click
+                      objects directly, or use the command bar below.
+                    </p>
+                    <p>
+                      Esc closes the folio. Manual input pauses while menus are
+                      open; autonomous activities continue.
+                    </p>
+                  </section>
+                </div>
+              ) : (
+                <FolioContent
+                  tab={tab}
+                  state={state}
+                  busy={busy}
+                  act={act}
+                  edit={(next) => {
+                    setError("");
+                    setEditor(next);
+                  }}
+                />
+              )}
+            </div>
+            <div className="folio-footer">
+              <span>✧</span> No hurry. Your next chapter is yours.
+            </div>
+          </aside>
+        )}
+      </main>
+      <nav className="command-bar" id="game-menu" aria-label="Game menus">
+        {tabs
+          .filter((t) =>
+            [
+              "sessions",
+              "quests",
+              "shop",
+              "curriculum",
+              "history",
+              "save",
+            ].includes(t.id),
+          )
+          .map((t) => (
+            <button
+              key={t.id}
+              className={tab === t.id ? "selected" : ""}
+              aria-pressed={tab === t.id}
+              aria-controls="folio"
+              onClick={() => {
+                if (tab === t.id) closeMenu();
+                else open(t.id);
+              }}
+            >
+              <span className="command-icon" aria-hidden="true">
+                {t.icon}
+              </span>
+              <span>{t.label}</span>
+            </button>
+          ))}
+      </nav>
+      {ambient && (
+        <button className="ambient-exit" onClick={() => setAmbient(false)}>
+          Return to menus
+        </button>
+      )}
+      <div className="toast" role="status" key={message}>
+        {message}
+      </div>
+      <FinishSessionDialog
+        session={finishing ? currentSession : undefined}
+        elapsed={clock.elapsedMs}
+        busy={busy}
+        close={() => setFinishing(false)}
+        act={act}
+        questCompleted={
+          !!state?.quests.find((q) => q.id === currentSession?.questId)
+            ?.completed
+        }
+      />
+      <EditorDialog
+        editor={editor}
+        busy={busy}
+        error={error}
+        close={() => setEditor(null)}
+        act={act}
+      />
+    </div>
+  );
+}
