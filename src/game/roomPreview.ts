@@ -35,6 +35,7 @@ export function renderRoomPreview(id: Interior): Promise<string> {
           }
           preload() {
             preloadHeroine(this);
+            roomDefinitions[id].preload?.(this);
             if (id === "personal-study") preloadStudy(this);
           }
           create() {

@@ -77,6 +77,9 @@ export default function App() {
     Number(preference("university-parallax", "0.6")),
   );
   const [finishing, setFinishing] = useState(false);
+  const rewardVisual = state?.history.find(
+    (h) => h.visualPending && !h.cancelledAt,
+  );
   const currentSession = state ? activeSession(state) : undefined;
   const [clockEpoch, setClockEpoch] = useState(0);
   const clock = useSessionClock(currentSession, clockEpoch);
@@ -246,6 +249,7 @@ export default function App() {
     }
   }, [tab]);
   function open(next: Tab) {
+    if (next === "shop" && location !== "happy-cafe") visit("happy-cafe");
     setAmbient(false);
     if (!tab) menuOpener.current = document.activeElement as HTMLElement;
     setTab(next);
@@ -376,6 +380,10 @@ export default function App() {
     open("focus");
   }
   function interact(id: Interaction) {
+    if (id === "cafe-menu" || id === "cafe-gifts") {
+      open("shop");
+      return;
+    }
     if (
       location === "personal-study" &&
       ["workstation", "focus-clock", "chalkboard", "chair"].includes(id)
@@ -459,7 +467,7 @@ export default function App() {
 
   return (
     <div
-      className={`app ${location === "university" ? "cinematic-app" : ""} ${motion.reduced ? "reduced-motion" : ""} ${ambient ? "ambient-view" : ""} ${focusMode ? "study-focus-mode" : ""} ${location === "personal-study" ? "study-room" : ""}`}
+      className={`app ${location === "university" ? "cinematic-app" : ""} ${motion.reduced ? "reduced-motion" : ""} ${ambient ? "ambient-view" : ""} ${focusMode ? "study-focus-mode" : ""} ${location === "personal-study" ? "study-room" : location === "happy-cafe" ? "cafe-room" : ""}`}
     >
       <a
         className="skip-link"
@@ -513,6 +521,7 @@ export default function App() {
               "grand-library",
               "personal-study",
               "observatory",
+              "happy-cafe",
             ] as Location[]
           ).map((id) => (
             <button
@@ -556,6 +565,15 @@ export default function App() {
             }
           >
             <Library
+              rewardVisual={
+                location === "happy-cafe" && !tab ? rewardVisual : undefined
+              }
+              onRewardVisualDone={(id) => {
+                void act(
+                  { type: "finishRewardVisual", id },
+                  "A little treat for yourself. Enjoy!",
+                );
+              }}
               celebration={celebration}
               blocked={!!tab || !!editor || finishing}
               reduced={motion.reduced}
@@ -570,6 +588,30 @@ export default function App() {
               onNavigate={visit}
             />
           </Suspense>
+        )}
+        {location === "happy-cafe" && !tab && (
+          <div className="cafe-shortcuts">
+            <button onClick={() => open("shop")}>
+              {state?.redemptionIntent
+                ? "Continue reward confirmation"
+                : "Browse the café menu"}
+            </button>
+            <button onClick={() => open("history")}>Rewards for later</button>
+            {rewardVisual && (
+              <button
+                disabled={busy}
+                onClick={() =>
+                  void act(
+                    { type: "finishRewardVisual", id: rewardVisual.id },
+                    "Visual skipped. Your reward is saved for later.",
+                  )
+                }
+              >
+                Skip reward animation
+              </button>
+            )}
+            <small>Visiting and relaxing are always free.</small>
+          </div>
         )}
         {location === "personal-study" && state && (
           <StudyClock state={state} now={now} open={() => open("focus")} />
@@ -1007,6 +1049,7 @@ export default function App() {
                   state={state}
                   busy={busy}
                   act={act}
+                  onRedeemed={closeMenu}
                   focus={focusQuestNow}
                   edit={(next) => {
                     setError("");

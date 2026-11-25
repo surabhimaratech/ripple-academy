@@ -1,11 +1,13 @@
 import type { State } from "./model";
-export type Interior = "grand-library" | "personal-study" | "observatory";
+export type Interior =
+  "grand-library" | "personal-study" | "observatory" | "happy-cafe";
 export type Location = Interior | "university";
 export const roomNames: Record<Location, string> = {
   university: "Ripple Academy",
   "grand-library": "Grand Library",
   "personal-study": "Personal Study",
   observatory: "Observatory",
+  "happy-cafe": "Happy Café",
 };
 export interface ActivityCategory {
   id: string;
@@ -95,9 +97,12 @@ function name(s: string) {
   return s.trim();
 }
 export function validRoom(room: unknown): room is Interior {
-  return ["grand-library", "personal-study", "observatory"].includes(
-    room as string,
-  );
+  return [
+    "grand-library",
+    "personal-study",
+    "observatory",
+    "happy-cafe",
+  ].includes(room as string);
 }
 function elapsed(n: number) {
   if (!Number.isSafeInteger(n) || n < 0 || n > 31536000000)

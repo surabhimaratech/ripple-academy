@@ -1,3 +1,4 @@
+import { rewardKinds, type RewardKind } from "./rewards";
 import { validateFocus } from "./focus";
 import { questDetails } from "./questDetails";
 import {
@@ -43,6 +44,11 @@ function list<T>(v: unknown, parse: (x: Record<string, unknown>) => T): T[] {
 }
 const id = (v: unknown) => text(v, "ID", 128);
 const rewardAmount = (v: unknown) => number(v, "reward amount", 0, 1000000);
+function kind(v: unknown): RewardKind {
+  if (!rewardKinds.includes(v as RewardKind))
+    throw Error("Invalid reward presentation.");
+  return v as RewardKind;
+}
 export function validateSave(input: unknown): State {
   let v = record(input);
   if ("format" in v) {
@@ -78,13 +84,30 @@ export function validateSave(input: unknown): State {
     id: id(r.id),
     title: text(r.title, "reward title"),
     cost: rewardAmount(r.cost),
+    ...(r.kind !== undefined ? { kind: kind(r.kind) } : {}),
   }));
-  const history = list<Redemption>(v.history, (h) => ({
-    id: id(h.id),
-    title: text(h.title, "redemption title"),
-    cost: rewardAmount(h.cost),
-    at: date(h.at),
-  }));
+  const history = list<Redemption>(v.history, (h) => {
+    if (h.enjoyedAt !== undefined && h.cancelledAt !== undefined)
+      throw Error("A cancelled reward cannot be enjoyed.");
+    if (h.visualPending !== undefined && typeof h.visualPending !== "boolean")
+      throw Error("Invalid reward visual state.");
+    if (h.cancelledAt !== undefined && h.visualPending === true)
+      throw Error("Cancelled reward cannot have a pending visual.");
+    return {
+      id: id(h.id),
+      title: text(h.title, "redemption title"),
+      cost: rewardAmount(h.cost),
+      at: date(h.at),
+      ...(h.kind !== undefined ? { kind: kind(h.kind) } : {}),
+      ...(h.visualPending !== undefined
+        ? { visualPending: h.visualPending as boolean }
+        : {}),
+      ...(h.enjoyedAt !== undefined ? { enjoyedAt: date(h.enjoyedAt) } : {}),
+      ...(h.cancelledAt !== undefined
+        ? { cancelledAt: date(h.cancelledAt) }
+        : {}),
+    };
+  });
   const result: State = {
     version: 1,
     xp: number(v.xp, "XP"),
@@ -93,6 +116,24 @@ export function validateSave(input: unknown): State {
     rewards,
     history,
   };
+  if (v.cafeStartersAdded !== undefined) {
+    if (typeof v.cafeStartersAdded !== "boolean")
+      throw Error("Invalid café starter flag.");
+    result.cafeStartersAdded = v.cafeStartersAdded;
+  }
+  if (v.redemptionIntent !== undefined) {
+    const i = record(v.redemptionIntent);
+    result.redemptionIntent = {
+      id: id(i.id),
+      rewardId: id(i.rewardId),
+      title: text(i.title, "reward title"),
+      cost: rewardAmount(i.cost),
+      kind: kind(i.kind),
+      at: date(i.at),
+    };
+    if (history.some((h) => h.id === result.redemptionIntent!.id))
+      throw Error("Confirmation already redeemed.");
+  }
   if (v.focus !== undefined) result.focus = validateFocus(v.focus);
   if (v.starterCollectionAdded !== undefined) {
     if (typeof v.starterCollectionAdded !== "boolean")
@@ -183,7 +224,7 @@ export function validateSave(input: unknown): State {
   // Deleted quests can retain earnings. Active snapshots must still be reversible.
   const activeXP = quests.reduce((n, q) => n + (q.completed?.xp ?? 0), 0);
   const activeGold = quests.reduce((n, q) => n + (q.completed?.gold ?? 0), 0);
-  const spent = history.reduce((n, h) => n + h.cost, 0);
+  const spent = history.reduce((n, h) => n + (h.cancelledAt ? 0 : h.cost), 0);
   if (result.xp < activeXP || result.gold < activeGold - spent)
     throw Error("Balances do not match the completion and redemption records.");
   return result;

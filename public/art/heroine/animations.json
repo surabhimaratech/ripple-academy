@@ -497,6 +497,50 @@
           "group": "study-stand-rear"
         }
       ]
+    },
+    {
+      "id": "cafe-pastry",
+      "src": "/art/heroine/cafe-pastry-v1.png",
+      "columns": 2,
+      "rows": 1,
+      "frames": [
+        {
+          "name": "cafe-pastry-a",
+          "row": 0,
+          "column": 0,
+          "height": 116,
+          "group": "cafe-pastry"
+        },
+        {
+          "name": "cafe-pastry-b",
+          "row": 0,
+          "column": 1,
+          "height": 116,
+          "group": "cafe-pastry"
+        }
+      ]
+    },
+    {
+      "id": "cafe-counter",
+      "src": "/art/heroine/cafe-counter-v1.png",
+      "columns": 2,
+      "rows": 1,
+      "frames": [
+        {
+          "name": "cafe-order-a",
+          "row": 0,
+          "column": 0,
+          "height": 112,
+          "group": "cafe-counter"
+        },
+        {
+          "name": "cafe-order-b",
+          "row": 0,
+          "column": 1,
+          "height": 112,
+          "group": "cafe-counter"
+        }
+      ]
     }
   ],
   "clips": {
@@ -588,6 +632,22 @@
         "sleep-b"
       ],
       "frameMs": 3600
+    },
+    "pastry": {
+      "frames": [
+        "cafe-pastry-a",
+        "cafe-pastry-b",
+        "cafe-pastry-a",
+        "cafe-pastry-a"
+      ],
+      "frameMs": 1800
+    },
+    "ordering": {
+      "frames": [
+        "cafe-order-a",
+        "cafe-order-b"
+      ],
+      "frameMs": 1500
     }
   }
 }

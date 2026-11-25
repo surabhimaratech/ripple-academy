@@ -1,3 +1,4 @@
+import { cafeSeat } from "./cafe";
 import type { Point, Obstacle } from "./movement";
 export type Polygon = Point[];
 export interface FurnitureAnchor {
@@ -107,6 +108,16 @@ export const windowVantage = {
   mode: "seated" as const,
 };
 export function furnitureForActivity(id?: string) {
+  if (
+    [
+      "cafe-drink",
+      "cafe-pastry",
+      "cafe-read",
+      "cafe-relax",
+      "cafe-window",
+    ].includes(id ?? "")
+  )
+    return cafeSeat;
   return id === "code" || id === "study-write" || id === "study-window"
     ? studyFurniture.desk
     : ["study-read", "study-tea", "study-rest"].includes(id ?? "")

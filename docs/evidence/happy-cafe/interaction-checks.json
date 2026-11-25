@@ -1,0 +1,112 @@
+[
+  {
+    "size": "1440x900",
+    "activity": "cafe-arrive",
+    "details": "Room: Happy Café · Activity: cafe-arrive · State: observing · Facing: down · Scale: 2.34 · Contact: floor:observe · Transition: none · Blend: settled"
+  },
+  {
+    "size": "1440x900",
+    "activity": "cafe-menu",
+    "details": "Room: Happy Café · Activity: cafe-menu · State: observing · Facing: up · Scale: 2.30 · Contact: cafe-counter · Transition: none · Blend: settled"
+  },
+  {
+    "size": "1440x900",
+    "activity": "cafe-order",
+    "details": "Room: Happy Café · Activity: cafe-order · State: observing · Facing: up · Scale: 2.30 · Contact: cafe-counter · Transition: none · Blend: settled"
+  },
+  {
+    "size": "1440x900",
+    "activity": "cafe-wait",
+    "details": "Room: Happy Café · Activity: cafe-wait · State: observing · Facing: up · Scale: 2.30 · Contact: cafe-counter · Transition: none · Blend: settled"
+  },
+  {
+    "size": "1440x900",
+    "activity": "cafe-drink",
+    "details": "Room: Happy Café · Activity: cafe-drink · State: sitting · Facing: down · Scale: 1.80 · Contact: cafe-window-chair · Transition: none · Blend: settled"
+  },
+  {
+    "size": "1440x900",
+    "activity": "cafe-pastry",
+    "details": "Room: Happy Café · Activity: cafe-pastry · State: sitting · Facing: down · Scale: 1.80 · Contact: cafe-window-chair · Transition: none · Blend: settled"
+  },
+  {
+    "size": "1440x900",
+    "activity": "cafe-read",
+    "details": "Room: Happy Café · Activity: cafe-read · State: reading · Facing: down · Scale: 1.80 · Contact: cafe-window-chair · Transition: none · Blend: settled"
+  },
+  {
+    "size": "1440x900",
+    "activity": "cafe-gifts",
+    "details": "Room: Happy Café · Activity: cafe-gifts · State: reading · Facing: up · Scale: 2.29 · Contact: floor:browse · Transition: none · Blend: settled"
+  },
+  {
+    "size": "1440x900",
+    "activity": "cafe-relax",
+    "details": "Room: Happy Café · Activity: cafe-relax · State: sitting · Facing: down · Scale: 1.80 · Contact: cafe-window-chair · Transition: none · Blend: settled"
+  },
+  {
+    "size": "1440x900",
+    "activity": "cafe-window",
+    "details": "Room: Happy Café · Activity: cafe-window · State: observing · Facing: down · Scale: 1.80 · Contact: cafe-window-chair · Transition: none · Blend: settled"
+  },
+  {
+    "size": "1440x900",
+    "activity": "cafe-leave",
+    "details": "Room: Happy Café · Activity: cafe-leave · State: observing · Facing: up · Scale: 2.24 · Contact: floor:observe · Transition: none · Blend: settled"
+  },
+  {
+    "size": "1366x768",
+    "activity": "cafe-arrive",
+    "details": "Room: Happy Café · Activity: cafe-arrive · State: observing · Facing: down · Scale: 2.34 · Contact: floor:observe · Transition: none · Blend: settled"
+  },
+  {
+    "size": "1366x768",
+    "activity": "cafe-menu",
+    "details": "Room: Happy Café · Activity: cafe-menu · State: observing · Facing: up · Scale: 2.30 · Contact: cafe-counter · Transition: none · Blend: settled"
+  },
+  {
+    "size": "1366x768",
+    "activity": "cafe-order",
+    "details": "Room: Happy Café · Activity: cafe-order · State: observing · Facing: up · Scale: 2.30 · Contact: cafe-counter · Transition: none · Blend: settled"
+  },
+  {
+    "size": "1366x768",
+    "activity": "cafe-wait",
+    "details": "Room: Happy Café · Activity: cafe-wait · State: observing · Facing: up · Scale: 2.30 · Contact: cafe-counter · Transition: none · Blend: settled"
+  },
+  {
+    "size": "1366x768",
+    "activity": "cafe-drink",
+    "details": "Room: Happy Café · Activity: cafe-drink · State: sitting · Facing: down · Scale: 1.80 · Contact: cafe-window-chair · Transition: none · Blend: settled"
+  },
+  {
+    "size": "1366x768",
+    "activity": "cafe-pastry",
+    "details": "Room: Happy Café · Activity: cafe-pastry · State: sitting · Facing: down · Scale: 1.80 · Contact: cafe-window-chair · Transition: none · Blend: settled"
+  },
+  {
+    "size": "1366x768",
+    "activity": "cafe-read",
+    "details": "Room: Happy Café · Activity: cafe-read · State: reading · Facing: down · Scale: 1.80 · Contact: cafe-window-chair · Transition: none · Blend: settled"
+  },
+  {
+    "size": "1366x768",
+    "activity": "cafe-gifts",
+    "details": "Room: Happy Café · Activity: cafe-gifts · State: reading · Facing: up · Scale: 2.29 · Contact: floor:browse · Transition: none · Blend: settled"
+  },
+  {
+    "size": "1366x768",
+    "activity": "cafe-relax",
+    "details": "Room: Happy Café · Activity: cafe-relax · State: sitting · Facing: down · Scale: 1.80 · Contact: cafe-window-chair · Transition: none · Blend: settled"
+  },
+  {
+    "size": "1366x768",
+    "activity": "cafe-window",
+    "details": "Room: Happy Café · Activity: cafe-window · State: observing · Facing: down · Scale: 1.80 · Contact: cafe-window-chair · Transition: none · Blend: settled"
+  },
+  {
+    "size": "1366x768",
+    "activity": "cafe-leave",
+    "details": "Room: Happy Café · Activity: cafe-leave · State: observing · Facing: up · Scale: 2.24 · Contact: floor:observe · Transition: none · Blend: settled"
+  }
+]

@@ -39,6 +39,13 @@ export function baselinePlacementFor(
     "position" | "activity" | "state" | "moving" | "pose" | "offsetY"
   >,
 ): Placement {
+  if (room === "happy-cafe")
+    return {
+      ...b.position,
+      depth: b.position.y,
+      key: "no-legacy-cafe",
+      occluders: [],
+    };
   const engaged =
     !!b.activity &&
     !b.moving &&

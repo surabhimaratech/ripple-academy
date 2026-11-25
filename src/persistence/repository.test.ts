@@ -223,3 +223,57 @@ it("rolls back both session completion and quest awards if completion data is in
   expect([state.xp, state.gold]).toEqual([0, 0]);
   await r.close();
 });
+
+it("serializes confirmations/refunds across tabs and reloads with enjoyed tracking intact", async () => {
+  const name = crypto.randomUUID(),
+    a = new Repository(name),
+    b = new Repository(name);
+  await a.restore({ ...legacyState(), gold: 15 });
+  await a.transact({ type: "addCafeStarters" });
+  await a.transact({
+    type: "prepareRedemption",
+    id: "cafe-starter-coffee",
+    intentId: "cafe-ticket",
+  });
+  await Promise.all([
+    a.transact({ type: "confirmRedemption", id: "cafe-ticket" }),
+    b.transact({ type: "confirmRedemption", id: "cafe-ticket" }),
+  ]);
+  expect((await a.transact()).gold).toBe(10);
+  expect((await b.transact()).history).toHaveLength(1);
+  await Promise.all([
+    a.transact({ type: "cancelRedemption", id: "cafe-ticket" }),
+    b.transact({ type: "cancelRedemption", id: "cafe-ticket" }),
+  ]);
+  expect((await a.transact()).gold).toBe(15);
+  await a.close();
+  await b.close();
+  const reopened = new Repository(name);
+  const s = await reopened.transact();
+  expect(s.history[0].cancelledAt).toBeTruthy();
+  expect(s.gold).toBe(15);
+  await reopened.close();
+});
+it("racing Enjoyed and cancellation serialize to one mutually exclusive outcome", async () => {
+  const name = crypto.randomUUID(),
+    a = new Repository(name),
+    b = new Repository(name);
+  await a.restore({ ...legacyState(), gold: 10 });
+  await a.transact({ type: "addCafeStarters" });
+  await a.transact({
+    type: "prepareRedemption",
+    id: "cafe-starter-coffee",
+    intentId: "usage-race",
+  });
+  await a.transact({ type: "confirmRedemption", id: "usage-race" });
+  await Promise.all([
+    a.transact({ type: "enjoyRedemption", id: "usage-race" }),
+    b.transact({ type: "cancelRedemption", id: "usage-race" }),
+  ]);
+  const s = await a.transact(),
+    h = s.history[0];
+  expect(!!h.enjoyedAt !== !!h.cancelledAt).toBe(true);
+  expect(s.gold).toBe(h.cancelledAt ? 10 : 5);
+  await a.close();
+  await b.close();
+});

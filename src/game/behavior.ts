@@ -22,6 +22,7 @@ export type Pose =
   | "observe"
   | "globe"
   | "rest"
+  | "pastry"
   | "tea"
   | "sleep"
   | "stretch"

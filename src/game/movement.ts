@@ -76,7 +76,12 @@ export const objects = [
   },
 ] as const;
 export type Interaction =
-  "workstation" | "focus-clock" | "chalkboard" | (typeof objects)[number]["id"];
+  | "cafe-menu"
+  | "cafe-gifts"
+  | "workstation"
+  | "focus-clock"
+  | "chalkboard"
+  | (typeof objects)[number]["id"];
 export function nearestObject(p: Point) {
   let best: (typeof objects)[number] | null = null;
   let distance = 96;

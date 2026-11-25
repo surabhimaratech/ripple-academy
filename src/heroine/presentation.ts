@@ -1,3 +1,4 @@
+import { cafeFloorScale } from "../game/cafe";
 import {
   furnitureForActivity,
   studyFloorScale,
@@ -66,12 +67,21 @@ export function placementFor(
     !["walking-to-object", "wandering", "player-controlled"].includes(b.state);
   const base: Placement = {
     ...b.position,
-    scale: room === "personal-study" ? studyFloorScale(b.position.y) : 1,
+    scale:
+      room === "personal-study"
+        ? studyFloorScale(b.position.y)
+        : room === "happy-cafe"
+          ? cafeFloorScale(b.position.y)
+          : 1,
     depth: b.position.y,
     key: "standing",
     occluders: [],
   };
-  if (room === "personal-study" && b.departingActivity && b.departure) {
+  if (
+    (room === "personal-study" || room === "happy-cafe") &&
+    b.departingActivity &&
+    b.departure
+  ) {
     const old = furnitureForActivity(b.departingActivity.id);
     if (old)
       return furniturePlacement(
@@ -83,7 +93,9 @@ export function placementFor(
   }
   if (!engaged) return base;
   const id = b.activity!.id;
-  const anchor = room === "personal-study" && furnitureForActivity(id);
+  const anchor =
+    (room === "personal-study" || room === "happy-cafe") &&
+    furnitureForActivity(id);
   if (anchor)
     return furniturePlacement(
       anchor,
@@ -92,7 +104,11 @@ export function placementFor(
       reduced ? 1 : 1 - (b.settling ?? 0) / 1.2,
     );
 
-  if (room !== "personal-study" && (b.pose === "code" || b.pose === "write")) {
+  if (
+    room !== "personal-study" &&
+    room !== "happy-cafe" &&
+    (b.pose === "code" || b.pose === "write")
+  ) {
     return {
       x: room === "grand-library" ? 632 : 280,
       y: room === "grand-library" ? 398 : 435,
@@ -101,9 +117,18 @@ export function placementFor(
       occluders: [furniture[room].desk],
     };
   }
+  if (
+    room === "happy-cafe" &&
+    ["cafe-menu", "cafe-order", "cafe-wait"].includes(id)
+  )
+    return { ...base, key: "cafe-counter" };
   if (id === "telescope")
     return { x: 768, y: 446, depth: 483, key: "telescope", occluders: [] };
-  if (room !== "personal-study" && (b.offsetY || b.pose === "tea"))
+  if (
+    room !== "personal-study" &&
+    room !== "happy-cafe" &&
+    (b.offsetY || b.pose === "tea")
+  )
     return {
       ...base,
       x: b.position.x,
@@ -190,24 +215,37 @@ export function frameForPlacement(
   if (p.transition) {
     const { kind, progress, furniture } = p.transition;
     const t = kind === "arrive" ? progress : 1 - progress;
-    const side = furniture === "study-armchair" ? "front" : "rear";
+    const side =
+      furniture === "study-armchair" || furniture === "cafe-window-chair"
+        ? "front"
+        : "rear";
     if (t < 0.3) return `study-stand-${side}`;
     if (t < 0.8) return `study-bend-${side}`;
     if (kind === "leave")
-      return furniture === "study-armchair" ? "study-rest" : "study-think";
+      return furniture === "study-armchair" || furniture === "cafe-window-chair"
+        ? "study-rest"
+        : "study-think";
   }
-  if (p.key === "study-armchair" && frame === "read-seated" && !reduced) {
+  if (
+    (p.key === "study-armchair" || p.key === "cafe-window-chair") &&
+    frame === "read-seated" &&
+    !reduced
+  ) {
     const t = activityTime % 16;
     if (t > 14 && t < 15.5) return "study-look-up";
     if (t > 6.5 && t < 6.7) return "study-read-blink";
   }
   if (
-    p.key === "study-armchair" &&
+    (p.key === "study-armchair" || p.key === "cafe-window-chair") &&
     frame === "rest" &&
     !reduced &&
     activityTime % 20 > 14
   )
     return "study-rest-eyes";
+  if (p.key === "cafe-counter")
+    return !reduced && activityTime % 3 > 1.5 ? "cafe-order-b" : "cafe-order-a";
+  if (p.key === "cafe-window-chair" && frame.startsWith("idle-"))
+    return "study-look-up";
   return p.frames?.[frame] ?? frame;
 }
 
@@ -221,13 +259,14 @@ function furniturePlacement(
   const t = kind === "arrive" ? p : 1 - p;
   const ease = t * t * (3 - 2 * t);
   const floor = kind === "arrive" ? anchor.approach : anchor.exit;
+  const floorScale = anchor.id.startsWith("cafe-")
+    ? cafeFloorScale(floor.y)
+    : studyFloorScale(floor.y);
   return {
     x: floor.x + (anchor.contact.x - floor.x) * ease,
     y: floor.y + (anchor.contact.y - floor.y) * ease,
-    scale:
-      studyFloorScale(floor.y) +
-      (anchor.scale - studyFloorScale(floor.y)) * ease,
-    depth,
+    scale: floorScale + (anchor.scale - floorScale) * ease,
+    depth: anchor.id.startsWith("cafe-") ? anchor.contact.y : depth,
     key: anchor.id,
     occluders: [],
     foreground: anchor.foreground,

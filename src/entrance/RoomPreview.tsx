@@ -43,7 +43,7 @@ export function RoomPreview({
           src={src}
           width="1280"
           height="720"
-          alt={`${title}: ${room === "grand-library" ? "candlelit bookshelves, reading chairs and arched windows" : room === "personal-study" ? "a writing desk, open books and a moonlit window" : "a telescope, star charts and a quiet desk"}`}
+          alt={`${title}: ${room === "grand-library" ? "candlelit bookshelves, reading chairs and arched windows" : room === "personal-study" ? "a writing desk, open books and a moonlit window" : room === "happy-cafe" ? "sunset windows, a coffee counter and cozy seating" : "a telescope, star charts and a quiet desk"}`}
         />
       ) : (
         <span className="preview-loading">

@@ -1,3 +1,5 @@
+import { cafeConfig, cafeStart } from "./cafe";
+import { paintCafe, preloadCafe } from "./cafeArt";
 import { studyFurniture, windowVantage } from "./furniture";
 import { paintStudy } from "./studyArt";
 import type Phaser from "phaser";
@@ -16,6 +18,7 @@ export interface RoomDefinition {
   sessionActivity: string;
   sessionVariations?: string[];
   sessionIntro?: string;
+  preload?: (s: Phaser.Scene) => void;
   paint: (s: Phaser.Scene, reduced: boolean) => Phaser.Tweens.Tween[];
 }
 const make = (a: Activity) => a;
@@ -250,6 +253,23 @@ const observatory: RoomConfig = {
   ],
 };
 export const roomDefinitions: Record<Interior, RoomDefinition> = {
+  "happy-cafe": {
+    id: "happy-cafe",
+    title: "Happy Café",
+    config: cafeConfig,
+    start: cafeStart,
+    sessionActivity: "cafe-relax",
+    paint: paintCafe,
+    preload: preloadCafe,
+    hits: [
+      { id: "cafe-menu", x: 378, y: 445, w: 360, h: 230 },
+      { id: "cafe-menu", x: 478, y: 225, w: 128, h: 110 },
+      { id: "cafe-gifts", x: 1140, y: 385, w: 220, h: 318 },
+      { id: "chair", x: 758, y: 487, w: 132, h: 190 },
+      { id: "window", x: 860, y: 250, w: 370, h: 240 },
+      { id: "door", x: 76, y: 370, w: 130, h: 300 },
+    ],
+  },
   "grand-library": {
     id: "grand-library",
     title: "The Grand Library",

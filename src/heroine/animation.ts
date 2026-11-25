@@ -25,6 +25,12 @@ export function heroineFrame(p: HeroinePose, reduced: boolean): string {
     if (p.activityId === "telescope")
       return telescopeSample(p.activityTime, reduced).frame;
     if (p.pose === "code") return workSample(p.activityTime, reduced).frame;
+    if (p.pose === "pastry")
+      return reduced
+        ? "cafe-pastry-a"
+        : p.activityTime % 16 < 4
+          ? loopFrame("tea", p.activityTime)
+          : loopFrame("pastry", p.activityTime - 4);
     if (p.pose === "tea")
       return reduced ? "tea-hold" : loopFrame("tea", p.activityTime);
     if (p.pose === "sleep")

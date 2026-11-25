@@ -1,3 +1,9 @@
+import {
+  reduceRewards,
+  type RewardAction,
+  type RewardKind,
+  type RedemptionIntent,
+} from "./rewards";
 import { reduceFocus, type FocusState, type FocusAction } from "./focus";
 import { questDetails, starterQuests } from "./questDetails";
 import {
@@ -25,11 +31,16 @@ export interface Quest {
   completed?: { xp: number; gold: number; at: string };
 }
 export interface Reward {
+  kind?: RewardKind;
   id: string;
   title: string;
   cost: number;
 }
 export interface Redemption {
+  kind?: RewardKind;
+  visualPending?: boolean;
+  enjoyedAt?: string;
+  cancelledAt?: string;
   id: string;
   title: string;
   cost: number;
@@ -43,6 +54,8 @@ export interface Discovery {
 }
 export interface State {
   version: 1;
+  redemptionIntent?: RedemptionIntent;
+  cafeStartersAdded?: boolean;
   focus?: FocusState;
   starterCollectionAdded?: boolean;
   categories?: ActivityCategory[];
@@ -86,6 +99,7 @@ export function title(s: string) {
   return s.trim();
 }
 export type Action =
+  | RewardAction
   | SessionAction
   | FocusAction
   | { type: "importQuests"; quests: Quest[]; starter?: boolean }
@@ -103,6 +117,7 @@ export function apply(
   at = new Date().toISOString(),
 ): State {
   const s = structuredClone(state);
+  reduceRewards(s, action as RewardAction, at);
   if (
     action.type === "focusStart" &&
     action.questId &&

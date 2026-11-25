@@ -2,6 +2,7 @@ import { useEffect, useRef, type FormEvent } from "react";
 import type { Editor as EditorValue } from "./Folio";
 import type { FocusActivity } from "../domain/focus";
 import type { Interior } from "../domain/sessions";
+import type { RewardKind } from "../domain/rewards";
 import type { Action } from "../domain/model";
 export function EditorDialog({
   editor,
@@ -70,7 +71,13 @@ export function EditorDialog({
         : editor.kind === "reward"
           ? {
               type: "saveReward",
-              reward: { id, title, cost: Number(f.get("cost")) },
+              reward: {
+                ...editor.value,
+                id,
+                title,
+                cost: Number(f.get("cost")),
+                kind: String(f.get("kind")) as RewardKind,
+              },
             }
           : {
               type: "saveDiscovery",
@@ -251,18 +258,32 @@ export function EditorDialog({
               )}
             </>
           ) : editor.kind === "reward" ? (
-            <label>
-              Gold cost
-              <input
-                name="cost"
-                type="number"
-                min="0"
-                max="1000000"
-                step="1"
-                required
-                defaultValue={editor.value?.cost ?? 30}
-              />
-            </label>
+            <>
+              <label>
+                Celebration in Happy Café
+                <select
+                  name="kind"
+                  defaultValue={editor.value?.kind ?? "celebrate"}
+                >
+                  <option value="celebrate">A simple celebration</option>
+                  <option value="coffee">Coffee / tea</option>
+                  <option value="pastry">Coffee and pastry</option>
+                  <option value="book">Book</option>
+                </select>
+              </label>
+              <label>
+                Gold cost
+                <input
+                  name="cost"
+                  type="number"
+                  min="0"
+                  max="1000000"
+                  step="1"
+                  required
+                  defaultValue={editor.value?.cost ?? 30}
+                />
+              </label>
+            </>
           ) : (
             <label>
               Your discovery

@@ -54,6 +54,9 @@ export const entranceArt = {
   courtyard: "/art/entrance/courtyard.png",
   /** Optional supplied preview URLs override snapshots of the actual room renderer. */
   roomPreviews: {} as Partial<
-    Record<"grand-library" | "personal-study" | "observatory", string>
+    Record<
+      "grand-library" | "personal-study" | "observatory" | "happy-cafe",
+      string
+    >
   >,
 };

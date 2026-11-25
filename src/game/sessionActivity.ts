@@ -15,6 +15,7 @@ export function sessionPlan(
           "grand-library": "write",
           "personal-study": "study-write",
           observatory: "charts",
+          "happy-cafe": "cafe-read",
         } as const
       )[room.id]
     : reading
@@ -23,6 +24,7 @@ export function sessionPlan(
             "grand-library": "armchair-book",
             "personal-study": "study-read",
             observatory: "observatory-read",
+            "happy-cafe": "cafe-read",
           } as const
         )[room.id]
       : room.sessionActivity;

@@ -1,3 +1,5 @@
+import { RewardSequence } from "./rewardSequence";
+import type { Redemption } from "../domain/model";
 import { focusPlan } from "./focusActivity";
 import type { FocusSegment } from "../domain/focus";
 import { preloadStudy } from "./studyArt";
@@ -29,6 +31,8 @@ interface Status {
   manual: number;
 }
 class GrandLibrary extends Phaser.Scene {
+  private rewardSequence?: RewardSequence;
+  private rewardReportedAt = -10;
   private heroine!: Phaser.GameObjects.Sprite;
   private view!: ScholarView;
   private behavior!: ScholarBehavior;
@@ -47,6 +51,7 @@ class GrandLibrary extends Phaser.Scene {
   }
   preload() {
     preloadHeroine(this);
+    this.definition.preload?.(this);
     if (this.definition.id === "personal-study") preloadStudy(this);
   }
   create() {
@@ -102,6 +107,8 @@ class GrandLibrary extends Phaser.Scene {
       discovery: "Bookshelves · study & research",
       chair: "Armchair · a freely chosen break",
       window: "Window · reflection",
+      "cafe-menu": "Happy Café · browse rewards",
+      "cafe-gifts": "Books & gifts · browse rewards",
     };
     const hover = this.add.graphics().setDepth(1000);
     for (const hit of this.definition.hits) {
@@ -109,7 +116,11 @@ class GrandLibrary extends Phaser.Scene {
         .zone(hit.x, hit.y, hit.w, hit.h)
         .setInteractive({ useHandCursor: true })
         .on("pointerover", () => {
-          if (this.definition.id === "personal-study" && !this.blocked) {
+          if (
+            (this.definition.id === "personal-study" ||
+              this.definition.id === "happy-cafe") &&
+            !this.blocked
+          ) {
             this.game.events.emit("room-prompt", labels[hit.id] ?? "Explore");
             hover
               .clear()
@@ -196,6 +207,11 @@ class GrandLibrary extends Phaser.Scene {
     const autonomy = (value: boolean) => this.behavior.setAutonomous(value);
     const thoughts = (value: boolean) => this.behavior.setThoughts(value);
     const session = () => {
+      if (
+        this.definition.id === "happy-cafe" &&
+        this.registry.get("rewardVisual")
+      )
+        return;
       const focus = this.registry.get("focus") as FocusSegment | undefined;
       const focusIntent = focusPlan(this.definition.id, focus);
       if (focusIntent) {
@@ -239,6 +255,26 @@ class GrandLibrary extends Phaser.Scene {
     if (!this.behavior) return;
     const dt = Math.min(delta / 1000, 0.05);
     this.clock += dt;
+    if (this.definition.id === "happy-cafe") {
+      const reward = this.registry.get("rewardVisual") as
+        Redemption | undefined;
+      if (reward && this.rewardSequence?.id !== reward.id)
+        this.rewardSequence = new RewardSequence(
+          reward.id,
+          reward.kind ?? "celebrate",
+        );
+      if (!reward && this.rewardSequence) {
+        this.rewardSequence.skip(this.behavior);
+        this.rewardSequence = undefined;
+      }
+      if (this.rewardSequence && !this.rewardSequence.done) {
+        this.rewardSequence.step(this.behavior, dt);
+      }
+      if (this.rewardSequence?.done && this.clock - this.rewardReportedAt > 1) {
+        this.rewardReportedAt = this.clock;
+        this.game.events.emit("reward-visual-done", this.rewardSequence.id);
+      }
+    }
     const dx =
       Number(this.keys.has("d") || this.keys.has("arrowright")) -
       Number(this.keys.has("a") || this.keys.has("arrowleft"));
@@ -291,7 +327,12 @@ class GrandLibrary extends Phaser.Scene {
           ? telescopeSample(this.behavior.engaged, this.reduced).label
           : this.behavior.label;
     const status = {
-      label: activityLabel,
+      label:
+        this.definition.id === "happy-cafe" && this.behavior.settling > 0
+          ? "Settling into her seat"
+          : this.definition.id === "happy-cafe" && this.behavior.departure > 0
+            ? "Standing up"
+            : activityLabel,
       state: this.behavior.state,
       manual: Math.ceil(this.behavior.manualRemaining),
     };
@@ -409,6 +450,8 @@ class GrandLibrary extends Phaser.Scene {
 }
 export const locations = roomDefinitions;
 export function Library({
+  rewardVisual,
+  onRewardVisualDone,
   celebration,
   blocked,
   reduced,
@@ -422,6 +465,8 @@ export function Library({
   day,
   onNavigate,
 }: {
+  rewardVisual?: Redemption;
+  onRewardVisualDone?: (id: string) => void;
   celebration: Celebration | null;
   blocked: boolean;
   reduced: boolean;
@@ -435,6 +480,8 @@ export function Library({
   day: string;
   onNavigate: (id: Location) => void;
 }) {
+  const rewardCallback = useRef(onRewardVisualDone);
+  rewardCallback.current = onRewardVisualDone;
   const host = useRef<HTMLDivElement>(null),
     game = useRef<Phaser.Game | undefined>(undefined);
   const callback = useRef(onInteract);
@@ -469,6 +516,7 @@ export function Library({
       audio: { noAudio: true },
       callbacks: {
         preBoot: (g) => {
+          g.registry.set("rewardVisual", rewardVisual);
           g.registry.set("reduced", reduced);
           g.registry.set("blocked", blocked);
           g.registry.set("autonomous", autonomous);
@@ -482,6 +530,9 @@ export function Library({
       },
     });
     game.current = instance;
+    instance.events.on("reward-visual-done", (id: string) =>
+      rewardCallback.current?.(id),
+    );
     instance.events.on("room-interact", (id: Interaction) =>
       callback.current(id),
     );
@@ -521,6 +572,9 @@ export function Library({
       instance.destroy(true);
     };
   }, []);
+  useEffect(() => {
+    game.current?.registry.set("rewardVisual", rewardVisual);
+  }, [rewardVisual?.id]);
   useEffect(() => {
     game.current?.registry.set("blocked", blocked);
     game.current?.events.emit("room-blocked", blocked);

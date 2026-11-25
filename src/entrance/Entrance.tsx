@@ -16,6 +16,12 @@ import { useJourney } from "./useJourney";
 import { localTimeOfDay } from "../game/atmosphere";
 const wings = [
   {
+    id: "happy-cafe",
+    label: "Happy Café",
+    tag: "A LITTLE PLEASURE",
+    description: "Coffee, small treats, and an afternoon of your own.",
+  },
+  {
     id: "grand-library",
     label: "Grand Library",
     tag: "FOR THE CURIOUS MIND",
@@ -249,6 +255,12 @@ export function Entrance({
                 </button>
                 <button
                   className="grounds-text-link"
+                  onClick={() => visit("happy-cafe")}
+                >
+                  Visit Happy Café · always free
+                </button>
+                <button
+                  className="grounds-text-link"
                   onClick={() => visit(resume)}
                 >
                   Continue in {roomNames[resume]}
@@ -327,7 +339,7 @@ export function Entrance({
             II. &nbsp; YOUR ACADEMIC WINGS
           </span>
           <h2 id="wings-title">Find your quiet corner.</h2>
-          <p>Three doors. A world of your own.</p>
+          <p>A quiet corner for every part of your day.</p>
         </div>
         <div className="wing-grid">
           {wings.map((w) => (

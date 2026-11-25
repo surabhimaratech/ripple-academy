@@ -1,3 +1,6 @@
+import { RewardSequence } from "../game/rewardSequence";
+import { rewardKinds, type RewardKind } from "../domain/rewards";
+import { cafeProps } from "../game/cafe";
 import { interactionEntry } from "./interactions";
 import { Navigation } from "../game/navigation";
 import { furnitureForActivity } from "../game/furniture";
@@ -35,6 +38,7 @@ export default function HeroinePreview() {
     "grand-library",
     "personal-study",
     "observatory",
+    "happy-cafe",
   ].includes(params.get("room") ?? "")
     ? (params.get("room") as Interior)
     : "personal-study";
@@ -49,24 +53,37 @@ export default function HeroinePreview() {
       ? params.get("activity")!
       : roomDefinitions[initialRoom].sessionActivity,
   );
-  const [holdActivity, setHoldActivity] = useState(false);
+  const [sequenceKind, setSequenceKind] = useState<RewardKind>(
+    rewardKinds.includes(params.get("sequence") as RewardKind)
+      ? (params.get("sequence") as RewardKind)
+      : "coffee",
+  );
+  const [sequenceKey, setSequenceKey] = useState(0);
+  const [sequenceEnabled, setSequenceEnabled] = useState(
+    initialRoom === "happy-cafe" &&
+      rewardKinds.includes(params.get("sequence") as RewardKind),
+  );
+  const [holdActivity, setHoldActivity] = useState(
+    params.get("trigger") === "1",
+  );
   const [inspector, setInspector] = useState("");
   const [calibration, setCalibration] = useState(neutralCalibration);
   const [baseline, setBaseline] = useState(params.get("baseline") === "1");
   const [navigation, setNavigation] = useState(
-    params.get("interaction") === "1",
+    params.get("interaction") === "1" && params.get("nav") !== "0",
   );
   const [contact, setContact] = useState("");
   const [selected, setSelected] = useState(params.get("animation") ?? "work");
   const [context, setContext] = useState(params.get("context") ?? "matching");
   const [phase, setPhase] = useState("activity");
   const [phaseProgress, setPhaseProgress] = useState(0.5);
-  const [replay, setReplay] = useState(false);
+  const [replay, setReplay] = useState(params.get("trigger") === "1");
   const [replayKey, setReplayKey] = useState(0);
   const [replayStatus, setReplayStatus] = useState("");
   const [playing, setPlaying] = useState(!params.has("still")),
     [reduced, setReduced] = useState(
-      matchMedia("(prefers-reduced-motion: reduce)").matches,
+      params.get("reduced") === "1" ||
+        matchMedia("(prefers-reduced-motion: reduce)").matches,
     );
   const [guides, setGuides] = useState(params.get("guides") !== "0"),
     [occlusion, setOcclusion] = useState(true),
@@ -82,6 +99,9 @@ export default function HeroinePreview() {
     ? interactionEntry(interactionRoom, interactionId)
     : catalogEntry;
   const options = useRef({
+    sequenceKind,
+    sequenceKey,
+    sequenceEnabled,
     holdActivity,
     phase,
     phaseProgress,
@@ -101,6 +121,9 @@ export default function HeroinePreview() {
     time,
   });
   options.current = {
+    sequenceKind,
+    sequenceKey,
+    sequenceEnabled,
     holdActivity,
     phase,
     phaseProgress,
@@ -128,6 +151,8 @@ export default function HeroinePreview() {
       private view!: ScholarView;
       private guide!: Phaser.GameObjects.Graphics;
       private elapsed = Number(params.get("t") ?? 0);
+      private rewardSequence?: RewardSequence;
+      private sequenceKey = -1;
       private simulation?: ScholarBehavior;
       private simulationKey = "";
       private simulationTime = 0;
@@ -146,6 +171,7 @@ export default function HeroinePreview() {
             ? o.entry.room
             : o.context;
         if (room === "personal-study") preloadStudy(this);
+        roomDefinitions[room as Interior]?.preload?.(this);
       }
       create() {
         const o = options.current,
@@ -210,13 +236,38 @@ export default function HeroinePreview() {
           this.simulationTime = 0;
           this.leaving = false;
         }
-        if (!o.replay) this.simulation = undefined;
+        if (
+          o.sequenceEnabled &&
+          d.id === "happy-cafe" &&
+          this.sequenceKey !== o.sequenceKey
+        ) {
+          this.simulation = new ScholarBehavior(d.config, () => 0.5, d.start);
+          this.rewardSequence = new RewardSequence(
+            `preview-${o.sequenceKey}`,
+            o.sequenceKind,
+          );
+          this.sequenceKey = o.sequenceKey;
+        }
+        if (!o.sequenceEnabled && this.rewardSequence) {
+          this.rewardSequence = undefined;
+          this.simulation = undefined;
+        }
+        if (!o.replay && !o.sequenceEnabled) this.simulation = undefined;
         if (this.simulation && o.playing) {
           this.simulationTime += Math.min(delta / 1000, 0.05);
-          if (this.simulation.engaged > 6 && !this.leaving && !o.holdActivity) {
+          if (
+            !o.sequenceEnabled &&
+            this.simulation.engaged > 6 &&
+            !this.leaving &&
+            !o.holdActivity
+          ) {
             this.simulation.walkTo(d.start);
             this.leaving = true;
           }
+          this.rewardSequence?.step(
+            this.simulation,
+            Math.min(delta / 1000, 0.05),
+          );
           this.simulation.step(Math.min(delta / 1000, 0.05));
         }
         const model = this.simulation ?? {
@@ -287,7 +338,7 @@ export default function HeroinePreview() {
           : undefined;
         this.view.render(pose, placement, delta / 1000, o.reduced, name);
         const cameraAnchor =
-          room === "personal-study" && !o.replay
+          (room === "personal-study" || room === "happy-cafe") && !o.replay
             ? furnitureForActivity(o.entry.activity)
             : undefined;
         this.cameras.main
@@ -370,6 +421,23 @@ export default function HeroinePreview() {
               ],
               true,
             );
+          if (d.id === "happy-cafe")
+            for (const prop of cafeProps) {
+              this.guide
+                .lineStyle(2, 0xf5cd85)
+                .strokeCircle(prop.propAnchor.x, prop.propAnchor.y, 6);
+              if ("foreground" in prop && prop.foreground) {
+                const f = prop.foreground;
+                this.guide
+                  .lineStyle(1, 0xf39887)
+                  .strokeRect(
+                    prop.x - prop.w / 2 + f.x * prop.w,
+                    prop.y - prop.h + f.y * prop.h,
+                    f.w * prop.w,
+                    f.h * prop.h,
+                  );
+              }
+            }
           this.guide.fillStyle(0x8ed5c8, 0.9);
           for (const a of d.config.activities) {
             this.guide
@@ -416,34 +484,60 @@ export default function HeroinePreview() {
               placement.y,
             );
         }
+        const currentActivity =
+          this.rewardSequence && !this.rewardSequence.done
+            ? d.config.activities.find(
+                (a) => a.id === this.rewardSequence?.activity,
+              )
+            : (this.simulation?.activity ?? activity);
         if (_now - this.lastReport > 100) {
           this.lastReport = _now;
           if (alive) {
             setInspector(
-              `Room: ${d.title} · Activity: ${o.entry.activity} · State: ${model.state} · Facing: ${pose.facing} · Scale: ${(placement.scale ?? 1).toFixed(2)} · Contact: ${placement.key} · Transition: ${placement.transition?.kind ?? "none"} · Blend: ${this.view.blending ? "transitioning" : "settled"}`,
+              `Room: ${d.title} · Activity: ${currentActivity?.id ?? o.entry.activity} · State: ${model.state} · Facing: ${pose.facing} · Scale: ${(placement.scale ?? 1).toFixed(2)} · Contact: ${placement.key} · Transition: ${placement.transition?.kind ?? "none"} · Blend: ${this.view.blending ? "transitioning" : "settled"}`,
             );
             setReplayStatus(
-              this.simulation
-                ? `${this.simulation.label} · ${this.simulation.departure ? "standing up" : this.simulation.settling ? "settling into seat" : this.leaving ? "departure" : "approach / activity"}`
-                : "",
+              this.rewardSequence?.done
+                ? "Reward preview complete · no save or gold changes"
+                : this.simulation
+                  ? `${this.simulation.label} · ${this.simulation.departure ? "standing up" : this.simulation.settling ? "settling into seat" : this.leaving ? "departure" : "approach / activity"}`
+                  : "",
             );
             setContact(
-              calibrationRecord(o.entry.room, o.entry.activity, placement, {
-                walkableBounds: d.config.bounds,
-                collisionPolygons: d.config.obstacles.map((r) => [
-                  { x: r.x, y: r.y },
-                  { x: r.x + r.w, y: r.y },
-                  { x: r.x + r.w, y: r.y + r.h },
-                  { x: r.x, y: r.y + r.h },
-                ]),
-                approach: activity?.point,
-                standingAnchor: activity?.point,
-                seatedAnchor: placement.seat,
-                orientation: pose.facing,
-                state: model.state,
-                animation: displayedFrame,
-                spriteBounds,
-              }),
+              calibrationRecord(
+                o.entry.room,
+                currentActivity?.id ?? o.entry.activity,
+                placement,
+                {
+                  walkableBounds: d.config.bounds,
+                  collisionPolygons: d.config.obstacles.map((r) => [
+                    { x: r.x, y: r.y },
+                    { x: r.x + r.w, y: r.y },
+                    { x: r.x + r.w, y: r.y + r.h },
+                    { x: r.x, y: r.y + r.h },
+                  ]),
+                  approach: currentActivity?.point,
+                  standingAnchor: currentActivity?.point,
+                  exit: furnitureForActivity(currentActivity?.id)?.exit,
+                  foregroundTextureCuts:
+                    d.id === "happy-cafe"
+                      ? cafeProps.filter((p) => "foreground" in p)
+                      : undefined,
+                  propAnchors:
+                    d.id === "happy-cafe"
+                      ? cafeProps.map((p) => ({
+                          id: p.id,
+                          anchor: p.propAnchor,
+                          depth: p.depth,
+                        }))
+                      : undefined,
+                  seatedAnchor: placement.seat,
+                  orientation: pose.facing,
+                  state: model.state,
+                  animation: displayedFrame,
+                  spriteBounds,
+                },
+              ),
             );
             setTime(this.elapsed);
             setFrame(displayedFrame);
@@ -525,6 +619,44 @@ export default function HeroinePreview() {
                   ))}
                 </select>
               </label>
+              {interactionRoom === "happy-cafe" && (
+                <section>
+                  <p>Reward sequence preview · no saves or gold</p>
+                  <label>
+                    Reward presentation
+                    <select
+                      value={sequenceKind}
+                      onChange={(e) =>
+                        setSequenceKind(e.target.value as RewardKind)
+                      }
+                    >
+                      <option value="coffee">Coffee</option>
+                      <option value="pastry">Coffee and pastry</option>
+                      <option value="book">Book</option>
+                      <option value="celebrate">Celebration</option>
+                    </select>
+                  </label>
+                  <button
+                    onClick={() => {
+                      setSequenceKey((n) => n + 1);
+                      setSequenceEnabled(true);
+                      setReplay(false);
+                      setPlaying(true);
+                      setZoom(1);
+                    }}
+                  >
+                    Preview reward sequence
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSequenceEnabled(false);
+                      setReplay(false);
+                    }}
+                  >
+                    Stop reward preview
+                  </button>
+                </section>
+              )}
               <label>
                 Room activity
                 <select
@@ -547,6 +679,7 @@ export default function HeroinePreview() {
               </label>
               <button
                 onClick={() => {
+                  setSequenceEnabled(false);
                   setHoldActivity(true);
                   setReplayKey((n) => n + 1);
                   setReplay(true);

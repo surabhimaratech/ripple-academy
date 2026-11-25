@@ -2,7 +2,7 @@
 
 *Through curiosity, to the stars.*
 
-A cozy, single-player, local-only personal development game. A place to become yourself. The university entrance now leads to the Grand Library, Personal Study and Observatory. A living scholar wanders, reads, writes and observes at her own pace, and accompanies activities you explicitly choose in the real world.
+A cozy, single-player, local-only personal development game. A place to become yourself. The university entrance now leads to the Grand Library, Personal Study, Observatory and Happy Café. The heroine wanders, reads, writes and observes at her own pace, and accompanies activities you explicitly choose in the real world.
 
 ## Run locally
 
@@ -36,7 +36,7 @@ The entrance is one continuous, normally scrolling journey:
 2. **Approach (20–40%)** — independent camera depths bring the pathway and entrance closer while distant sky/mountains move less.
 3. **Opening the gates (40–60%)** — ornate wooden leaves rotate around their outer hinges inside a stationary carved stone portal, revealing the approved courtyard. Scroll upward to close them again.
 4. **Within the grounds (60–80%)** — the welcome, academic progress and functional activity/quest/curriculum controls appear in a gentle stagger.
-5. **Academic wings (80–100%)** — normal document scrolling reveals previews captured from the actual Grand Library, Personal Study and Observatory painters. Each opens its existing interactive room.
+5. **Academic wings (80–100%)** — normal document scrolling reveals previews captured from the actual Grand Library, Personal Study, Observatory and Happy Café painters. Each opens its existing interactive room.
 
 **Enter the Academy** smoothly scrolls into the approach. **Skip to Academic Wings** bypasses the sequence; **Resume** goes directly to the active/paused activity's room or the last visited room. The grounds anchor lands after the welcome controls appear. All navigation remains keyboard accessible.
 
@@ -189,3 +189,15 @@ See [the milestone report](docs/MILESTONE-2.4.1.md) for selected asset dimension
 Use `/?preview=heroine&interaction=1&room=personal-study&activity=study-window` during development. **Room interaction calibration** lists every configured activity in all three existing rooms. Choose one, then **Trigger selected activity** to watch its real approach and hold the activity. Turn off room calibration to inspect individual animation clips. Walking bounds, collisions/routes, approaches, seated/standing anchors, sprite bounds, masks, current frame/facing/scale and blend status are available as overlays and calibration JSON. No saved progress is opened by this preview.
 
 Window reflection now uses the desk chair beneath the window, reusing the compatible thoughtful desk pose. The armchair/side table have not been crudely moved out of the flattened background. See [the follow-up report](docs/STUDY-FOLLOWUP.md) for the exact clean-plate, furniture, shadow, inward-facing sprite requirements and requested before/after screenshots. Player-facing labels use “explorer” and “Journal”; XP thresholds and saved data are unchanged. Happy Café remains out of scope.
+
+## Happy Café (Milestone 2.5)
+
+Visit **Happy Café** from the courtyard, room navigation or **Reward shop**. The café is free to visit: wander, read, watch the lake or relax without spending gold. WASD/arrows, click-to-walk, furniture interactions, autonomy/manual control and Ambient view work here too. The active Pomodoro continues when you visit another room.
+
+The counter/menu board and gift shelves open your existing reward menu. Optionally add six starter ideas (5-gold coffee, 8-gold coffee/pastry, movie evening, takeout, a book and a special treat); existing rewards and prices are preserved. Edit a reward's café presentation to choose coffee, pastry, book or a simple celebration. Choose a reward, review its price/resulting balance, then confirm. Confirmation is saved across reloads and charges once. XP and level never decrease when spending gold.
+
+After redemption she visits the counter or gift shelf and settles into the window seat. **Skip reward animation** keeps the redemption. **History / Rewards for later** distinguishes Redeemed, optionally Enjoyed, and Cancelled/refunded. Unenjoyed redemptions can be cancelled with an in-game confirmation; the original cost is refunded once. Watching an animation never marks a real-world reward enjoyed.
+
+The café uses a clean architectural plate, transparent furniture/prop atlases, same-source foreground cuts, and registered satchel-free seated poses. Its furniture can be moved independently of the walls/window. See [the milestone report and art manifest](docs/HAPPY-CAFE.md), [asset attribution](docs/ASSETS.md), and [generation prompts](docs/art/HAPPY-CAFE-PROMPTS.json).
+
+Development only: `/?preview=heroine&interaction=1&room=happy-cafe&activity=cafe-drink&zoom=1` opens the real room calibration. Trigger any activity or preview coffee/pastry/book/celebration sequences without opening IndexedDB. `trigger=1` starts the selected approach automatically; `sequence=coffee` previews a reward flow, `nav=0` hides navigation guides, `reduced=1` previews reduced motion, and `still=1&t=6` freezes a pose. Collision, approach/exit/seat, sprite bounds, furniture foreground crops, prop anchors and depth metadata are inspectable. This studio is excluded from production bundles.

@@ -169,3 +169,7 @@ html:has(.animation-lab) {
   color: #cbd6b1;
   margin: 10px 0;
 }
+/* Keep the entire calibrated room visible at both supported laptop heights. */
+.lab-canvas {
+  width: min(100%, calc((100vh - 260px) * 16 / 9));
+}

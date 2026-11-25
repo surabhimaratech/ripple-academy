@@ -1,3 +1,4 @@
+import { RewardMenu, RewardHistory } from "./RewardMenu";
 import { QuestTools } from "./QuestTools";
 import { HeroinePortrait } from "./HeroinePortrait";
 import { academicRank } from "../domain/sessions";
@@ -37,7 +38,9 @@ export function FolioContent({
   act,
   edit,
   focus,
+  onRedeemed,
 }: {
+  onRedeemed?: () => void;
   focus?: (id: string) => void;
   tab: Tab;
   state: State;
@@ -234,105 +237,16 @@ export function FolioContent({
     );
   if (tab === "shop")
     return (
-      <>
-        <div className="folio-intro">
-          <p>Little celebrations, chosen by you.</p>
-          <button
-            className="primary"
-            disabled={busy}
-            onClick={() => edit({ kind: "reward" })}
-          >
-            + New reward
-          </button>
-        </div>
-        <p className="care-note">
-          Rest, meals & essential self-care are always freely yours.
-        </p>
-        {state.gold < 0 && (
-          <p>
-            Gold from an undone quest has already been spent. Future earnings
-            will restore the balance.
-          </p>
-        )}
-        {state.rewards.length === 0 && (
-          <p className="empty">Add a little something to look forward to.</p>
-        )}
-        {state.rewards.map((r) => (
-          <article className="entry" key={r.id}>
-            <div className="entry-heading">
-              <span className="subject">PERSONAL REWARD</span>
-              <span className="reward-values">◈ {r.cost} gold</span>
-            </div>
-            <h3>{r.title}</h3>
-            <div className="entry-actions">
-              <button
-                className="complete"
-                disabled={busy || state.gold < r.cost}
-                onClick={() =>
-                  void act(
-                    {
-                      type: "redeem",
-                      id: r.id,
-                      redemptionId: crypto.randomUUID(),
-                    },
-                    `Redeemed: ${r.title}. Enjoy your reward.`,
-                  )
-                }
-              >
-                {state.gold < r.cost
-                  ? `${r.cost - state.gold} more gold`
-                  : "Redeem reward"}
-              </button>
-              <button
-                className="text-button"
-                disabled={busy}
-                onClick={() => edit({ kind: "reward", value: r })}
-              >
-                Edit
-              </button>
-              <button
-                className="text-button"
-                disabled={busy}
-                onClick={() => {
-                  if (
-                    confirm(
-                      "Remove this reward? Redemption history will be kept.",
-                    )
-                  )
-                    void act(
-                      { type: "deleteReward", id: r.id },
-                      "Reward removed.",
-                    );
-                }}
-              >
-                Delete
-              </button>
-            </div>
-          </article>
-        ))}
-      </>
+      <RewardMenu
+        state={state}
+        busy={busy}
+        act={act}
+        edit={edit}
+        onRedeemed={onRedeemed}
+      />
     );
   if (tab === "history")
-    return (
-      <>
-        <p className="folio-intro">
-          A record of the good things you’ve claimed.
-        </p>
-        {state.history.length === 0 ? (
-          <p className="empty">
-            Your redeemed rewards will appear on these pages.
-          </p>
-        ) : (
-          state.history.map((h) => (
-            <article className="entry" key={h.id}>
-              <span className="subject">{new Date(h.at).toLocaleString()}</span>
-              <h3>{h.title}</h3>
-              <p className="reward-values">◈ {h.cost} gold · Redeemed</p>
-            </article>
-          ))
-        )}
-      </>
-    );
+    return <RewardHistory state={state} busy={busy} act={act} />;
   if (tab === "discovery")
     return (
       <>
