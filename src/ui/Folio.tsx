@@ -1,3 +1,4 @@
+import { QuestTools } from "./QuestTools";
 import { HeroinePortrait } from "./HeroinePortrait";
 import { academicRank } from "../domain/sessions";
 import { progression } from "../domain/model";
@@ -5,6 +6,7 @@ import { useState } from "react";
 import type { State, Action, Quest, Reward, Discovery } from "../domain/model";
 import { keepsakes, unlockedKeepsakes } from "../domain/keepsakes";
 export type Tab =
+  | "focus"
   | "sessions"
   | "curriculum"
   | "quests"
@@ -18,6 +20,7 @@ export type Editor =
   | { kind: "reward"; value?: Reward }
   | { kind: "discovery"; value?: Discovery };
 export const tabs: { id: Tab; label: string; icon: string }[] = [
+  { id: "focus", label: "Study focus", icon: "◴" },
   { id: "sessions", label: "Activities", icon: "✦" },
   { id: "curriculum", label: "Curriculum", icon: "▥" },
   { id: "quests", label: "Quest journal", icon: "▤" },
@@ -33,7 +36,9 @@ export function FolioContent({
   busy,
   act,
   edit,
+  focus,
 }: {
+  focus?: (id: string) => void;
   tab: Tab;
   state: State;
   busy: boolean;
@@ -55,6 +60,7 @@ export function FolioContent({
             + New quest
           </button>
         </div>
+        <QuestTools state={state} busy={busy} act={act} />
         <div className="filters" aria-label="Quest status">
           <button aria-pressed={!completed} onClick={() => setCompleted(false)}>
             In progress ({state.quests.filter((q) => !q.completed).length})
@@ -84,6 +90,103 @@ export function FolioContent({
                   </span>
                 </div>
                 <h3>{q.title}</h3>
+                {q.objective && <p>{q.objective}</p>}
+                {q.description && <p>{q.description}</p>}
+                <small>
+                  {q.priority ?? "normal"} priority
+                  {q.estimatedMinutes
+                    ? ` · ~${q.estimatedMinutes} minutes`
+                    : ""}
+                  {q.room ? ` · ${q.room.replaceAll("-", " ")}` : ""} ·{" "}
+                  {
+                    (state.focus?.history ?? []).filter(
+                      (h) => h.phase === "focus" && h.questId === q.id,
+                    ).length
+                  }{" "}
+                  focus intervals
+                </small>
+                {q.subtasks?.map((item) => (
+                  <label className="check-label" key={item.id}>
+                    <input
+                      type="checkbox"
+                      checked={item.done}
+                      disabled={busy || !!q.completed}
+                      onChange={() =>
+                        void act(
+                          {
+                            type: "saveQuest",
+                            quest: {
+                              ...q,
+                              subtasks: q.subtasks!.map((x) =>
+                                x.id === item.id ? { ...x, done: !x.done } : x,
+                              ),
+                            },
+                          },
+                          "Checklist updated.",
+                        )
+                      }
+                    />
+                    {item.title}
+                  </label>
+                ))}
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void act(
+                      {
+                        type: "saveQuest",
+                        quest: {
+                          ...q,
+                          notes: String(
+                            new FormData(e.currentTarget).get("notes"),
+                          ),
+                        },
+                      },
+                      "Notes saved.",
+                    );
+                  }}
+                >
+                  <label>
+                    Completion / reflection notes
+                    <textarea
+                      name="notes"
+                      rows={2}
+                      maxLength={10000}
+                      defaultValue={q.notes ?? ""}
+                    />
+                  </label>
+                  <button disabled={busy}>Save notes</button>
+                </form>
+                <div className="entry-actions">
+                  {!q.completed && (
+                    <button disabled={busy} onClick={() => focus?.(q.id)}>
+                      Focus on quest
+                    </button>
+                  )}
+                  <button
+                    disabled={busy}
+                    onClick={() =>
+                      void act(
+                        {
+                          type: "saveQuest",
+                          quest: {
+                            ...q,
+                            id: crypto.randomUUID(),
+                            completed: undefined,
+                            subtasks: q.subtasks?.map((t) => ({
+                              ...t,
+                              done: false,
+                            })),
+                            notes: "",
+                          },
+                        },
+                        "Quest duplicated without rewards.",
+                      )
+                    }
+                  >
+                    Duplicate
+                  </button>
+                </div>
                 <div className="entry-actions">
                   <button
                     className="complete"

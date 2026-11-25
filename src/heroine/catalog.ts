@@ -7,6 +7,7 @@ export interface AnimationEntry {
   label: string;
   room: Interior;
   activity: string;
+  studioOnly?: boolean;
   pose: HeroinePose["pose"];
   duration: number;
   clip?: Parameters<typeof loopFrame>[0];
@@ -174,9 +175,10 @@ export const animationCatalog: AnimationEntry[] = [
   }),
   entry({
     id: "sleep",
-    label: "Sleeping beneath the quilt",
+    label: "Sleeping (studio asset; no bed in Study)",
     room: "personal-study",
-    activity: "study-sleep",
+    activity: "studio-sleep",
+    studioOnly: true,
     pose: "sleep",
     duration: 7.2,
   }),

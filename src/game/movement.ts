@@ -75,7 +75,8 @@ export const objects = [
     action: "Look at the stars",
   },
 ] as const;
-export type Interaction = (typeof objects)[number]["id"];
+export type Interaction =
+  "workstation" | "focus-clock" | "chalkboard" | (typeof objects)[number]["id"];
 export function nearestObject(p: Point) {
   let best: (typeof objects)[number] | null = null;
   let distance = 96;

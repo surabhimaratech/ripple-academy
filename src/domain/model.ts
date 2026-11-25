@@ -1,3 +1,5 @@
+import { reduceFocus, type FocusState, type FocusAction } from "./focus";
+import { questDetails, starterQuests } from "./questDetails";
 import {
   reduceSessions,
   type SessionAction,
@@ -12,6 +14,14 @@ export interface Quest {
   subject: string;
   xp: number;
   gold: number;
+  objective?: string;
+  description?: string;
+  notes?: string;
+  subtasks?: { id: string; title: string; done: boolean }[];
+  priority?: "low" | "normal" | "high";
+  estimatedMinutes?: number;
+  room?: import("./sessions").Interior;
+  activity?: import("./focus").FocusActivity;
   completed?: { xp: number; gold: number; at: string };
 }
 export interface Reward {
@@ -33,6 +43,8 @@ export interface Discovery {
 }
 export interface State {
   version: 1;
+  focus?: FocusState;
+  starterCollectionAdded?: boolean;
   categories?: ActivityCategory[];
   courses?: Course[];
   sessions?: ActivitySession[];
@@ -48,29 +60,8 @@ export const initialState = (): State => ({
   version: 1,
   xp: 0,
   gold: 0,
-  quests: [
-    {
-      id: "reading",
-      title: "Read a chapter of something wonderful",
-      subject: "Literature",
-      xp: 40,
-      gold: 15,
-    },
-    {
-      id: "curiosity",
-      title: "Follow a thread of curiosity",
-      subject: "Discovery",
-      xp: 30,
-      gold: 10,
-    },
-    {
-      id: "create",
-      title: "Make a little time to create",
-      subject: "Creative arts",
-      xp: 50,
-      gold: 20,
-    },
-  ],
+  starterCollectionAdded: true,
+  quests: starterQuests(),
   rewards: [
     { id: "coffee", title: "Coffee at a favorite café", cost: 30 },
     { id: "book", title: "A new book for the shelf", cost: 80 },
@@ -96,6 +87,8 @@ export function title(s: string) {
 }
 export type Action =
   | SessionAction
+  | FocusAction
+  | { type: "importQuests"; quests: Quest[]; starter?: boolean }
   | { type: "saveDiscovery"; discovery: Discovery }
   | { type: "deleteDiscovery"; id: string }
   | { type: "saveQuest"; quest: Quest }
@@ -110,6 +103,35 @@ export function apply(
   at = new Date().toISOString(),
 ): State {
   const s = structuredClone(state);
+  if (
+    action.type === "focusStart" &&
+    action.questId &&
+    !s.quests.some((q) => q.id === action.questId)
+  )
+    throw Error("This quest is no longer available.");
+  if (action.type.startsWith("focus")) {
+    s.focus = reduceFocus(s.focus, action as FocusAction);
+    return s;
+  }
+  if (action.type === "importQuests") {
+    if (action.starter && s.starterCollectionAdded) return s;
+    const ids = new Set(s.quests.map((q) => q.id));
+    for (const q of action.quests) {
+      if (ids.has(q.id)) throw Error("Duplicate quest ID.");
+      ids.add(q.id);
+    }
+    for (const q of action.quests)
+      s.quests.push({
+        id: q.id,
+        title: title(q.title),
+        subject: title(q.subject),
+        xp: amount(q.xp),
+        gold: amount(q.gold),
+        ...questDetails(q as unknown as Record<string, unknown>),
+      });
+    if (action.starter) s.starterCollectionAdded = true;
+    return s;
+  }
   reduceSessions(s, action as SessionAction, at, (id) => {
     const q = s.quests.find((x) => x.id === id);
     if (q && !q.completed) {
@@ -136,6 +158,7 @@ export function apply(
     const old = s.quests.find((x) => x.id === q.id);
     const value = {
       ...q,
+      ...questDetails(q as unknown as Record<string, unknown>),
       title: title(q.title),
       subject: title(q.subject),
       xp: amount(q.xp),

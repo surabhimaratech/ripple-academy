@@ -74,7 +74,7 @@ export class ScholarView {
         this.outgoing
           .setTexture(this.sprite.texture.key)
           .setPosition(this.sprite.x, this.sprite.y)
-          .setScale(1)
+          .setScale(this.sprite.scaleX, this.sprite.scaleY)
           .setDepth(this.sprite.depth)
           .setAlpha(1)
           .setVisible(true);
@@ -96,7 +96,7 @@ export class ScholarView {
     this.sprite
       .setTexture(`heroine-${frame}`)
       .setPosition(placement.x, placement.y)
-      .setScale(1, breathing)
+      .setScale(placement.scale ?? 1, (placement.scale ?? 1) * breathing)
       .setDepth(placement.depth)
       .setAlpha(this.blend);
     this.shadow

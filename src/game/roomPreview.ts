@@ -1,3 +1,4 @@
+import { preloadStudy } from "./studyArt";
 import Phaser from "phaser";
 import { roomDefinitions } from "./rooms";
 import { preloadHeroine } from "../heroine/textures";
@@ -34,6 +35,7 @@ export function renderRoomPreview(id: Interior): Promise<string> {
           }
           preload() {
             preloadHeroine(this);
+            if (id === "personal-study") preloadStudy(this);
           }
           create() {
             try {

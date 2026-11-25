@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { initialState, apply } from "./model";
+import { apply } from "./model";
+import { legacyState as initialState } from "./legacyFixture";
 import { parseSave, serializeSave, validateSave } from "./save";
 import { unlockedKeepsakes } from "./keepsakes";
 describe("save files", () => {

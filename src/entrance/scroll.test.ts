@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { initialState, apply } from "../domain/model";
+import { apply } from "../domain/model";
+import { legacyState as initialState } from "../domain/legacyFixture";
 import {
   scrollProgress,
   layerOffset,

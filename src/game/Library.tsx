@@ -1,3 +1,6 @@
+import { focusPlan } from "./focusActivity";
+import type { FocusSegment } from "../domain/focus";
+import { preloadStudy } from "./studyArt";
 import { useEffect, useRef, useState } from "react";
 import Phaser from "phaser";
 import { type Interaction } from "./movement";
@@ -44,6 +47,7 @@ class GrandLibrary extends Phaser.Scene {
   }
   preload() {
     preloadHeroine(this);
+    if (this.definition.id === "personal-study") preloadStudy(this);
   }
   create() {
     this.reduced = !!this.registry.get("reduced");
@@ -90,10 +94,42 @@ class GrandLibrary extends Phaser.Scene {
       .setOrigin(0.5, 1)
       .setDepth(1190)
       .setVisible(false);
+    const labels: Partial<Record<Interaction, string>> = {
+      workstation: "Desk · start or resume work",
+      "focus-clock": "Focus clock · timer controls",
+      quests: "Noticeboard · daily quests",
+      chalkboard: "Chalkboard · System Design",
+      discovery: "Bookshelves · study & research",
+      chair: "Armchair · a freely chosen break",
+      window: "Window · reflection",
+    };
+    const hover = this.add.graphics().setDepth(1000);
     for (const hit of this.definition.hits) {
       this.add
         .zone(hit.x, hit.y, hit.w, hit.h)
         .setInteractive({ useHandCursor: true })
+        .on("pointerover", () => {
+          if (this.definition.id === "personal-study" && !this.blocked) {
+            this.game.events.emit("room-prompt", labels[hit.id] ?? "Explore");
+            hover
+              .clear()
+              .lineStyle(2, 0xe4c681, 0.4)
+              .strokeRoundedRect(
+                hit.x - hit.w / 2,
+                hit.y - hit.h / 2,
+                hit.w,
+                hit.h,
+                8,
+              );
+          }
+        })
+        .on("pointerout", () => {
+          hover.clear();
+          this.game.events.emit(
+            "room-prompt",
+            "Click the floor to walk · WASD / arrows · E to interact",
+          );
+        })
         .on(
           "pointerdown",
           (
@@ -103,8 +139,11 @@ class GrandLibrary extends Phaser.Scene {
             e: Phaser.Types.Input.EventData,
           ) => {
             e.stopPropagation();
-            if (!this.blocked && _p.event?.target === this.game.canvas)
+            if (!this.blocked && _p.event?.target === this.game.canvas) {
+              if (this.definition.id === "personal-study")
+                this.game.events.emit("room-interact", hit.id);
               this.behavior.useObject(hit.id);
+            }
           },
         );
     }
@@ -157,6 +196,12 @@ class GrandLibrary extends Phaser.Scene {
     const autonomy = (value: boolean) => this.behavior.setAutonomous(value);
     const thoughts = (value: boolean) => this.behavior.setThoughts(value);
     const session = () => {
+      const focus = this.registry.get("focus") as FocusSegment | undefined;
+      const focusIntent = focusPlan(this.definition.id, focus);
+      if (focusIntent) {
+        this.behavior.setSession(focusIntent.activity, focusIntent.paused);
+        return;
+      }
       const active = this.registry.get("session") as
         ActivitySession | undefined;
       const plan = sessionPlan(this.definition, active);
@@ -372,6 +417,7 @@ export function Library({
   onInteract,
   location,
   session,
+  focus,
   parallax,
   day,
   onNavigate,
@@ -384,6 +430,7 @@ export function Library({
   onInteract: (id: Interaction) => void;
   location: Location;
   session: ActivitySession | undefined;
+  focus?: FocusSegment;
   parallax: number;
   day: string;
   onNavigate: (id: Location) => void;
@@ -428,6 +475,7 @@ export function Library({
           g.registry.set("thoughts", thoughts);
           g.registry.set("location", location);
           g.registry.set("session", session);
+          g.registry.set("focus", focus);
           g.registry.set("parallax", parallax);
           g.registry.set("day", day);
         },
@@ -498,6 +546,10 @@ export function Library({
     game.current?.registry.set("session", session);
     game.current?.events.emit("world-session");
   }, [session?.id, session?.runId, session?.phase]);
+  useEffect(() => {
+    game.current?.registry.set("focus", focus);
+    game.current?.events.emit("world-session");
+  }, [focus?.id, focus?.status, focus?.activity, focus?.phase]);
   useEffect(() => {
     game.current?.registry.set("parallax", parallax);
     game.current?.events.emit("world-parallax", parallax);

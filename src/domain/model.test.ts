@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { apply, initialState, progression } from "./model";
+import { apply, progression } from "./model";
+import { legacyState as initialState } from "./legacyFixture";
 describe("progression and quests", () => {
   it("calculates level boundaries", () => {
     expect(progression(0)).toEqual({ level: 1, current: 0, needed: 100 });

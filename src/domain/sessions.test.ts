@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { apply, initialState } from "./model";
+import { apply } from "./model";
+import { legacyState as initialState } from "./legacyFixture";
 import { categories, activeSession, academicRank } from "./sessions";
 import { serializeSave, parseSave, validateSave } from "./save";
 const start = {

@@ -1,0 +1,21 @@
+{
+  "format": "ripple-academy-quests",
+  "version": 1,
+  "quests": [
+    {
+      "title": "Architect of a Resilient Service",
+      "objective": "Explain architecture and tradeoffs of a notification service.",
+      "category": "System Design",
+      "subtasks": [
+        "Sketch components",
+        "Discuss failures and tradeoffs"
+      ],
+      "priority": "normal",
+      "estimatedMinutes": 60,
+      "room": "personal-study",
+      "activity": "system-design",
+      "xp": 15,
+      "gold": 5
+    }
+  ]
+}

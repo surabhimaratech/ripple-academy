@@ -1,3 +1,5 @@
+import { validateFocus } from "./focus";
+import { questDetails } from "./questDetails";
 import {
   validRoom,
   type ActivityCategory,
@@ -55,6 +57,7 @@ export function validateSave(input: unknown): State {
   if (v.version !== 1) throw Error("This save version is not supported.");
   const quests = list<Quest>(v.quests, (q) => {
     const item: Quest = {
+      ...questDetails(q),
       id: id(q.id),
       title: text(q.title, "quest title"),
       subject: text(q.subject, "subject"),
@@ -90,6 +93,12 @@ export function validateSave(input: unknown): State {
     rewards,
     history,
   };
+  if (v.focus !== undefined) result.focus = validateFocus(v.focus);
+  if (v.starterCollectionAdded !== undefined) {
+    if (typeof v.starterCollectionAdded !== "boolean")
+      throw Error("Invalid starter collection flag.");
+    result.starterCollectionAdded = v.starterCollectionAdded;
+  }
   if (v.discoveries !== undefined)
     result.discoveries = list<Discovery>(v.discoveries, (d) => {
       if (typeof d.body !== "string" || d.body.length > 10000)

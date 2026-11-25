@@ -3,6 +3,7 @@ import type { Point } from "../game/movement";
 import type { ScholarBehavior } from "../game/behavior";
 import type { Rect } from "./atlas";
 export interface Placement {
+  scale?: number;
   x: number;
   y: number;
   depth: number;
@@ -18,9 +19,8 @@ const box = (x: number, y: number, width: number, height: number): Rect => ({
 /** Existing furniture coordinates only. Masks affect the character, never repaint the rooms. */
 export const furniture = {
   "personal-study": {
-    desk: box(414, 366, 318, 68),
-    chairArms: [box(103, 479, 20, 34), box(184, 479, 20, 34)],
-    blanket: box(937, 480, 203, 80),
+    desk: box(393, 385, 516, 160),
+    chairArms: [box(0, 487, 46, 116), box(214, 487, 50, 116)],
   },
   "grand-library": {
     desk: box(499, 369, 262, 85),
@@ -44,6 +44,7 @@ export function placementFor(
     !["walking-to-object", "wandering", "player-controlled"].includes(b.state);
   const base: Placement = {
     ...b.position,
+    scale: room === "personal-study" ? 1.4 : 1,
     depth: b.position.y,
     key: "standing",
     occluders: [],
@@ -54,33 +55,27 @@ export function placementFor(
     const x =
       room === "personal-study"
         ? b.pose === "code"
-          ? 550
-          : 632
+          ? 648
+          : 560
         : room === "grand-library"
           ? 632
           : 280;
     return {
       x,
-      y: room === "observatory" ? 435 : 398,
+      y: room === "personal-study" ? 426 : room === "observatory" ? 435 : 398,
+      scale: room === "personal-study" ? 1.4 : 1,
       depth: b.position.y,
       key: `${room}:desk`,
       occluders: [furniture[room].desk],
     };
   }
-  if (b.pose === "sleep")
-    return {
-      x: 1022,
-      y: 500,
-      depth: 591,
-      key: "bed",
-      occluders: [furniture["personal-study"].blanket],
-    };
   if (id === "telescope")
     return { x: 768, y: 446, depth: 483, key: "telescope", occluders: [] };
   if (b.offsetY || b.pose === "tea")
     return {
       ...base,
-      y: b.position.y + b.offsetY,
+      x: room === "personal-study" ? 128 : b.position.x,
+      y: room === "personal-study" ? 580 : b.position.y + b.offsetY,
       key: `chair:${room}`,
       occluders: furniture[room].chairArms,
     };

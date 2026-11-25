@@ -1,3 +1,4 @@
+import { preloadStudy } from "../game/studyArt";
 import { useEffect, useRef, useState } from "react";
 import Phaser from "phaser";
 import {
@@ -67,10 +68,21 @@ export default function HeroinePreview() {
       private lastReport = 0;
       preload() {
         preloadHeroine(this);
+        const o = options.current;
+        const room = o.entry.studioOnly
+          ? "studio"
+          : o.context === "matching"
+            ? o.entry.room
+            : o.context;
+        if (room === "personal-study") preloadStudy(this);
       }
       create() {
         const o = options.current,
-          room = o.context === "matching" ? o.entry.room : o.context;
+          room = o.entry.studioOnly
+            ? "studio"
+            : o.context === "matching"
+              ? o.entry.room
+              : o.context;
         this.cameras.main.setBounds(0, 0, 1280, 720);
         this.room = room;
         this.lastEntry = o.entry.id;
@@ -91,7 +103,11 @@ export default function HeroinePreview() {
       }
       update(_now: number, delta: number) {
         const o = options.current,
-          room = o.context === "matching" ? o.entry.room : o.context;
+          room = o.entry.studioOnly
+            ? "studio"
+            : o.context === "matching"
+              ? o.entry.room
+              : o.context;
         if (room !== this.room) {
           this.scene.restart();
           return;

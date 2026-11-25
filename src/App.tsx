@@ -1,4 +1,11 @@
 import {
+  FocusPage,
+  FocusControls,
+  StudyClock,
+  useFocusNow,
+} from "./ui/FocusStudy";
+import { remaining } from "./domain/focus";
+import {
   activeSession,
   categories,
   academicRank,
@@ -52,6 +59,9 @@ export default function App() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
+  const [focusQuest, setFocusQuest] = useState<string>();
+  const now = useFocusNow();
   const [tab, setTab] = useState<Tab | null>(null);
   const [editor, setEditor] = useState<Editor | null>(null);
   const [celebration, setCelebration] = useState<Celebration | null>(null);
@@ -73,6 +83,7 @@ export default function App() {
   function visit(next: Location) {
     if (next !== "university") remember("ripple-last-room", next);
     setLocation(next);
+    setFocusMode(false);
     setTab(null);
     setPendingImport(null);
     setAmbient(false);
@@ -305,13 +316,84 @@ export default function App() {
   async function act(action: Action, success: string) {
     if (
       !muted &&
-      (action.type === "complete" || action.type === "finishSession")
+      (action.type === "complete" ||
+        action.type === "finishSession" ||
+        action.type === "focusStart" ||
+        action.type === "focusResume")
     )
       prepareChime();
-    return commit(() => repository.transact(action), success, action);
+    const result = await commit(
+      () => repository.transact(action),
+      success,
+      action,
+    );
+    if (
+      result &&
+      (action.type === "focusStart" || action.type === "focusResume") &&
+      location !== "personal-study"
+    )
+      visit("personal-study");
+    return result;
+  }
+  const timer = state?.focus?.current;
+  const reconcilePending = useRef(false);
+  const lastFocusRecord = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (
+      !timer ||
+      timer.status !== "running" ||
+      remaining(timer, now) > 0 ||
+      reconcilePending.current
+    )
+      return;
+    reconcilePending.current = true;
+    void act(
+      { type: "focusTick", id: timer.id, now: Date.now() },
+      "Interval complete. Choose your next quiet chapter.",
+    ).finally(() => {
+      reconcilePending.current = false;
+    });
+  }, [timer?.id, timer?.status, now]);
+  useEffect(() => {
+    const id = state?.focus?.history[0]?.id;
+    if (
+      id &&
+      lastFocusRecord.current !== undefined &&
+      id !== lastFocusRecord.current &&
+      state?.focus?.settings.chime &&
+      !muted
+    )
+      chime(false);
+    if (state) lastFocusRecord.current = id ?? "";
+  }, [!!state, state?.focus?.history[0]?.id]);
+  function enterFocus() {
+    visit("personal-study");
+    setFocusMode(true);
+  }
+  function focusQuestNow(id: string) {
+    setFocusQuest(id);
+    visit("personal-study");
+    open("focus");
   }
   function interact(id: Interaction) {
-    if (id === "quests" || id === "discovery" || id === "keepsakes") open(id);
+    if (
+      location === "personal-study" &&
+      ["workstation", "focus-clock", "chalkboard", "chair"].includes(id)
+    ) {
+      if (id === "chalkboard")
+        setFocusQuest(
+          state?.quests.find(
+            (q) => q.activity === "system-design" && !q.completed,
+          )?.id,
+        );
+      open("focus");
+    } else if (location === "personal-study" && id === "window") {
+      open("discovery");
+      setMessage(
+        "A quiet moment to reflect. Write down anything worth keeping.",
+      );
+    } else if (id === "quests" || id === "discovery" || id === "keepsakes")
+      open(id);
     else if (id === "door") visit("university");
     else if (id === "chair")
       setMessage(
@@ -377,7 +459,7 @@ export default function App() {
 
   return (
     <div
-      className={`app ${location === "university" ? "cinematic-app" : ""} ${motion.reduced ? "reduced-motion" : ""} ${ambient ? "ambient-view" : ""}`}
+      className={`app ${location === "university" ? "cinematic-app" : ""} ${motion.reduced ? "reduced-motion" : ""} ${ambient ? "ambient-view" : ""} ${focusMode ? "study-focus-mode" : ""} ${location === "personal-study" ? "study-room" : ""}`}
     >
       <a
         className="skip-link"
@@ -482,11 +564,38 @@ export default function App() {
               onInteract={interact}
               location={location}
               session={currentSession}
+              focus={state?.focus?.current}
               parallax={parallax}
               day={day}
               onNavigate={visit}
             />
           </Suspense>
+        )}
+        {location === "personal-study" && state && (
+          <StudyClock state={state} now={now} open={() => open("focus")} />
+        )}
+        {location === "personal-study" && state && !tab && (
+          <section className="study-focus-strip" aria-label="Focus session">
+            <div>
+              {state.focus?.current?.questId && (
+                <span className="focus-quest-title">
+                  {state.quests.find(
+                    (q) => q.id === state.focus?.current?.questId,
+                  )?.title ?? "Your focus quest"}
+                </span>
+              )}
+              <strong>
+                {state.focus?.current?.objective || "A study of your own"}
+              </strong>
+              <FocusControls state={state} act={act} busy={busy} now={now} />
+            </div>
+            <button onClick={() => open("focus")}>Focus controls</button>
+            <button
+              onClick={() => (focusMode ? setFocusMode(false) : enterFocus())}
+            >
+              {focusMode ? "Exit Focus Mode" : "Focus Mode"}
+            </button>
+          </section>
         )}
         <section
           className={`rpg-hud ${celebration ? "has-earned" : ""}`}
@@ -648,6 +757,15 @@ export default function App() {
                     Retry
                   </button>
                 </p>
+              ) : tab === "focus" ? (
+                <FocusPage
+                  state={state}
+                  busy={busy}
+                  act={act}
+                  now={now}
+                  selected={focusQuest}
+                  enter={enterFocus}
+                />
               ) : tab === "sessions" ? (
                 <SessionPage
                   state={state}
@@ -889,6 +1007,7 @@ export default function App() {
                   state={state}
                   busy={busy}
                   act={act}
+                  focus={focusQuestNow}
                   edit={(next) => {
                     setError("");
                     setEditor(next);
@@ -906,6 +1025,7 @@ export default function App() {
         {tabs
           .filter((t) =>
             [
+              "focus",
               "sessions",
               "quests",
               "shop",

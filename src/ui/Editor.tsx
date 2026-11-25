@@ -1,5 +1,7 @@
 import { useEffect, useRef, type FormEvent } from "react";
 import type { Editor as EditorValue } from "./Folio";
+import type { FocusActivity } from "../domain/focus";
+import type { Interior } from "../domain/sessions";
 import type { Action } from "../domain/model";
 export function EditorDialog({
   editor,
@@ -37,8 +39,29 @@ export function EditorDialog({
         ? {
             type: "saveQuest",
             quest: {
+              ...editor.value,
               id,
               title,
+              objective: String(f.get("objective")),
+              description: String(f.get("description")),
+              priority: String(f.get("priority")) as "low" | "normal" | "high",
+              estimatedMinutes: f.get("estimatedMinutes")
+                ? Number(f.get("estimatedMinutes"))
+                : undefined,
+              room: String(f.get("room")) as Interior,
+              activity: String(f.get("activity")) as FocusActivity,
+              subtasks: String(f.get("subtasks"))
+                .split("\n")
+                .map((t) => t.trim())
+                .filter(Boolean)
+                .map((title, i) => ({
+                  id: editor.value?.subtasks?.[i]?.id ?? crypto.randomUUID(),
+                  title,
+                  done:
+                    editor.value?.subtasks?.[i]?.title === title
+                      ? editor.value.subtasks[i].done
+                      : false,
+                })),
               subject: String(f.get("subject")),
               xp: Number(f.get("xp")),
               gold: Number(f.get("gold")),
@@ -108,6 +131,84 @@ export function EditorDialog({
           {editor.kind === "quest" ? (
             <>
               <label>
+                Practical objective
+                <input
+                  name="objective"
+                  maxLength={120}
+                  defaultValue={
+                    editor.value?.objective ?? editor.value?.title ?? ""
+                  }
+                />
+              </label>
+              <label>
+                Description
+                <textarea
+                  name="description"
+                  maxLength={10000}
+                  defaultValue={editor.value?.description}
+                />
+              </label>
+              <label>
+                Checklist (one item per line)
+                <textarea
+                  name="subtasks"
+                  defaultValue={editor.value?.subtasks
+                    ?.map((t) => t.title)
+                    .join("\n")}
+                />
+              </label>
+              <div className="form-row">
+                <label>
+                  Priority
+                  <select
+                    name="priority"
+                    defaultValue={editor.value?.priority ?? "normal"}
+                  >
+                    <option>low</option>
+                    <option>normal</option>
+                    <option>high</option>
+                  </select>
+                </label>
+                <label>
+                  Estimated minutes
+                  <input
+                    name="estimatedMinutes"
+                    type="number"
+                    min={1}
+                    max={1440}
+                    defaultValue={editor.value?.estimatedMinutes}
+                  />
+                </label>
+              </div>
+              <label>
+                Associated room
+                <select
+                  name="room"
+                  defaultValue={editor.value?.room ?? "personal-study"}
+                >
+                  <option value="personal-study">Personal Study</option>
+                  <option value="grand-library">Grand Library</option>
+                  <option value="observatory">Observatory</option>
+                </select>
+              </label>
+              <label>
+                Activity
+                <select
+                  name="activity"
+                  defaultValue={editor.value?.activity ?? "ai-engineering"}
+                >
+                  <option value="system-design">System Design</option>
+                  <option value="ai-engineering">AI / coding</option>
+                  <option value="outreach">Recruiter outreach</option>
+                  <option value="reading">Reading</option>
+                  <option value="writing">Journaling / notes</option>
+                </select>
+              </label>
+              <p className="care-note">
+                Suggested XP / gold: small 3–5 / 1; standard 8–10 / 2–3;
+                substantial 12–15 / 4–5; major 20–25 / 6–8.
+              </p>
+              <label>
                 Subject
                 <input
                   name="subject"
@@ -126,7 +227,7 @@ export function EditorDialog({
                     max="1000000"
                     step="1"
                     required
-                    defaultValue={editor.value?.xp ?? 30}
+                    defaultValue={editor.value?.xp ?? 8}
                   />
                 </label>
                 <label>
@@ -138,7 +239,7 @@ export function EditorDialog({
                     max="1000000"
                     step="1"
                     required
-                    defaultValue={editor.value?.gold ?? 10}
+                    defaultValue={editor.value?.gold ?? 2}
                   />
                 </label>
               </div>

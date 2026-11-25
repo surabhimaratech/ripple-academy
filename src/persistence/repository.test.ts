@@ -1,9 +1,11 @@
+import { legacyState } from "../domain/legacyFixture";
 import "fake-indexeddb/auto";
 import { it, expect } from "vitest";
 import { Repository } from "./repository";
 it("persists completions, edits and redemption history across repository restarts", async () => {
   const name = crypto.randomUUID();
   let r = new Repository(name);
+  await r.restore(legacyState());
   await r.transact({ type: "complete", id: "reading" });
   await r.transact({ type: "complete", id: "create" });
   await r.transact({ type: "redeem", id: "coffee", redemptionId: "a" });
@@ -23,6 +25,7 @@ it("serializes concurrent completion attempts from separate connections", async 
   const name = crypto.randomUUID();
   const a = new Repository(name),
     b = new Repository(name);
+  await a.restore(legacyState());
   await Promise.all([
     a.transact({ type: "complete", id: "reading" }),
     b.transact({ type: "complete", id: "reading" }),
@@ -33,6 +36,7 @@ it("serializes concurrent completion attempts from separate connections", async 
 });
 it("rolls back failed purchases", async () => {
   const r = new Repository(crypto.randomUUID());
+  await r.restore(legacyState());
   await expect(
     r.transact({ type: "redeem", id: "book", redemptionId: "x" }),
   ).rejects.toThrow();
@@ -43,6 +47,7 @@ it("rolls back failed purchases", async () => {
 it("loads a legacy database intact, imports atomically, and recovers the previous save after reopen", async () => {
   const name = crypto.randomUUID();
   let r = new Repository(name);
+  await r.restore(legacyState());
   const old = await r.transact({ type: "complete", id: "reading" });
   const incoming = {
     version: 1 as const,
@@ -63,6 +68,7 @@ it("loads a legacy database intact, imports atomically, and recovers the previou
 });
 it("invalid imports do not touch the current save or its recovery copy", async () => {
   const r = new Repository(crypto.randomUUID());
+  await r.restore(legacyState());
   const old = await r.transact({ type: "complete", id: "reading" });
   const next = { ...old, xp: 100 };
   await r.restore(next);
@@ -75,6 +81,7 @@ it("serializes import with completion and redemption without partial records", a
   const name = crypto.randomUUID();
   const a = new Repository(name),
     b = new Repository(name);
+  await a.restore(legacyState());
   const original = await a.transact({ type: "complete", id: "reading" });
   await a.restore({ ...original, gold: 100 });
   await Promise.all([
@@ -121,6 +128,7 @@ it("a concurrent import and completion serialize as complete saves", async () =>
   const name = crypto.randomUUID();
   const a = new Repository(name),
     b = new Repository(name);
+  await a.restore(legacyState());
   const legacy = await a.transact();
   const incoming = { ...legacy, xp: 100, gold: 50 };
   await Promise.all([
@@ -146,6 +154,7 @@ it("persists sessions and max-merges checkpoints from separate connections", asy
   const name = crypto.randomUUID(),
     a = new Repository(name),
     b = new Repository(name);
+  await a.restore(legacyState());
   await a.transact({
     type: "startSession",
     id: "focus",
@@ -191,6 +200,7 @@ it("persists sessions and max-merges checkpoints from separate connections", asy
 });
 it("rolls back both session completion and quest awards if completion data is invalid", async () => {
   const r = new Repository(crypto.randomUUID());
+  await r.restore(legacyState());
   await r.transact({
     type: "startSession",
     id: "s",

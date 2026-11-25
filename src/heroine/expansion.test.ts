@@ -75,28 +75,18 @@ it("subtracts furniture as positive, non-overlapping visible mask regions for Ca
     { x: 0, y: 0, width: 100, height: 100 },
   ]);
 });
-it("uses fixed desk/chair/bed contact anchors without moving navigation positions", () => {
+it("uses fixed desk/chair contact anchors and excludes nonexistent Study furniture without moving navigation positions", () => {
   const d = roomDefinitions["personal-study"];
   const b = new ScholarBehavior(d.config, () => 0.5, d.start);
   b.setSession("code");
   for (let i = 0; i < 500; i++) b.step(1 / 30);
   const before = { ...b.position },
     place = placementFor(d.id, b);
-  expect(place).toMatchObject({ x: 550, y: 398, key: "personal-study:desk" });
+  expect(place).toMatchObject({ x: 648, y: 426, key: "personal-study:desk" });
   expect(place.occluders).toEqual([furniture["personal-study"].desk]);
   expect(b.position).toEqual(before);
-  const sleep = d.config.activities.find((a) => a.pose === "sleep")!;
-  const sleeping = placementFor(d.id, {
-    ...b,
-    position: sleep.point,
-    activity: sleep,
-    state: "idle",
-    moving: false,
-    pose: "sleep",
-    offsetY: 0,
-  });
-  expect(sleeping.occluders).toEqual([furniture["personal-study"].blanket]);
-  expect(sleeping.depth).toBeGreaterThan(590);
+  expect(d.config.activities.some((a) => a.pose === "sleep")).toBe(false);
+  expect(animationCatalog.find((a) => a.id === "sleep")?.studioOnly).toBe(true);
 });
 it("queues a short post-session stretch without rewards and lets manual input cancel it", () => {
   for (const manual of [false, true]) {

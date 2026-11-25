@@ -1,7 +1,8 @@
 import { it, expect } from "vitest";
 import { roomDefinitions } from "./rooms";
 import { sessionPlan } from "./sessionActivity";
-import { apply, initialState } from "../domain/model";
+import { apply } from "../domain/model";
+import { legacyState as initialState } from "../domain/legacyFixture";
 import { activeSession } from "../domain/sessions";
 it.each([
   ["coding", "personal-study", "code"],
