@@ -81,8 +81,7 @@ export function SessionPage({ state, busy, act, go, elapsed, finish }: Props) {
   return (
     <div className="session-page">
       <p className="folio-intro">
-        Choose what you’re doing in the real world. Your scholar will keep you
-        company.
+        Choose what you’re doing in the real world. She will keep you company.
       </p>
       {current ? (
         <section className="current-session-page">
@@ -198,8 +197,8 @@ export function SessionPage({ state, busy, act, go, elapsed, finish }: Props) {
       <details className="mapping-settings">
         <summary>Activity categories & room mappings</summary>
         <p className="small-note">
-          Choose where your scholar accompanies each activity. Existing sessions
-          keep their original room.
+          Choose where she accompanies each activity. Existing sessions keep
+          their original room.
         </p>
         {catalog.map((c) => (
           <form

@@ -52,6 +52,8 @@ export const studyFurniture: Record<string, FurnitureAnchor> = {
     ],
     frames: {
       celebrate: "study-think",
+      window: "study-think",
+      "window-thought": "study-think",
       "type-a": "study-type-a",
       "type-b": "study-type-b",
       "think-work": "study-think",
@@ -98,12 +100,14 @@ export const studyFurniture: Record<string, FurnitureAnchor> = {
     ],
   },
 };
+/** The window is behind the solid workstation; reflection uses its reachable chair. */
 export const windowVantage = {
-  point: { x: 535, y: 610 },
+  point: studyFurniture.desk.approach,
   target: { x: 650, y: 210 },
+  mode: "seated" as const,
 };
 export function furnitureForActivity(id?: string) {
-  return id === "code" || id === "study-write"
+  return id === "code" || id === "study-write" || id === "study-window"
     ? studyFurniture.desk
     : ["study-read", "study-tea", "study-rest"].includes(id ?? "")
       ? studyFurniture.armchair

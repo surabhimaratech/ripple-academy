@@ -13,7 +13,7 @@ export function HeroinePortrait({
         alt={
           decorative
             ? ""
-            : "The Ripple Academy scholar, with wavy brown hair, a purple ribbon and an embroidered purple jacket"
+            : "The Ripple Academy heroine, with wavy brown hair, a purple ribbon and an embroidered purple jacket"
         }
         width="256"
         height="256"

@@ -12,7 +12,7 @@ Armchair reading, page turns, looking up, blinking, resting and tea use a new ch
 
 Study-specific drawn standing and half-standing frames support entry/departure, with brief blends and eased local contact motion. Navigation stays on valid floor; an occupied furniture transition is distinct from free walking through solids. Manual movement waits for standing-up completion. Reduced motion snaps render contacts to their resting endpoints. Celebration preserves the occupied contact and resumes the activity.
 
-Window reflection now takes place at an accessible floor viewpoint facing the large window, rather than beside the right cabinet. The desk blocks direct access to the glass; the heroine watches the window from the open floor. Her feet stay on that navigable floor point.
+Window reflection was subsequently corrected to use the reachable workstation chair under the large window. The desk blocks direct access to the glass, so the seated alternative replaces the earlier unconvincing floor viewpoint. See [the follow-up report](STUDY-FOLLOWUP.md) for current behavior and relocation dependencies.
 
 Player-facing terminology now uses **Focus timer**, **Scholar: autonomous**, **Manual control** and **journal**. Saved keys, quest/reward rules, focus accounting, IndexedDB schema, other room artwork and original heroine PNGs are unchanged. No Milestone 2.5 or Happy Café work is included.
 

@@ -13,6 +13,7 @@ export function calibrationRecord(
   room: string,
   activity: string,
   p: Placement,
+  inspection: Record<string, unknown> = {},
 ) {
   return JSON.stringify(
     {
@@ -20,6 +21,7 @@ export function calibrationRecord(
       version: 1,
       room,
       activity,
+      ...inspection,
       contact: { x: p.x, y: p.y, scale: p.scale ?? 1, depth: p.depth },
       occluders: p.occluders,
       foreground: p.foreground,

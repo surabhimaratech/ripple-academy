@@ -1,3 +1,5 @@
+import { interactionEntry } from "./interactions";
+import { Navigation } from "../game/navigation";
 import { furnitureForActivity } from "../game/furniture";
 import { ScholarBehavior } from "../game/behavior";
 import { heroineFrame } from "../heroine/animation";
@@ -16,7 +18,7 @@ import {
   previewFrame,
 } from "../heroine/catalog";
 import { heroine, frameNames } from "../heroine/assets";
-import { preloadHeroine } from "../heroine/textures";
+import { preloadHeroine, heroineFrameBounds } from "../heroine/textures";
 import { ScholarView } from "../game/scholarView";
 import { roomDefinitions } from "../game/rooms";
 import {
@@ -29,9 +31,31 @@ import "./preview.css";
 
 export default function HeroinePreview() {
   const params = new URLSearchParams(location.search);
+  const initialRoom: Interior = [
+    "grand-library",
+    "personal-study",
+    "observatory",
+  ].includes(params.get("room") ?? "")
+    ? (params.get("room") as Interior)
+    : "personal-study";
+  const [interactionMode, setInteractionMode] = useState(
+    params.has("activity") || params.get("interaction") === "1",
+  );
+  const [interactionRoom, setInteractionRoom] = useState<Interior>(initialRoom);
+  const [interactionId, setInteractionId] = useState(
+    roomDefinitions[initialRoom].config.activities.some(
+      (a) => a.id === params.get("activity"),
+    )
+      ? params.get("activity")!
+      : roomDefinitions[initialRoom].sessionActivity,
+  );
+  const [holdActivity, setHoldActivity] = useState(false);
+  const [inspector, setInspector] = useState("");
   const [calibration, setCalibration] = useState(neutralCalibration);
   const [baseline, setBaseline] = useState(params.get("baseline") === "1");
-  const [navigation, setNavigation] = useState(false);
+  const [navigation, setNavigation] = useState(
+    params.get("interaction") === "1",
+  );
   const [contact, setContact] = useState("");
   const [selected, setSelected] = useState(params.get("animation") ?? "work");
   const [context, setContext] = useState(params.get("context") ?? "matching");
@@ -52,9 +76,13 @@ export default function HeroinePreview() {
     [frame, setFrame] = useState("");
   const host = useRef<HTMLDivElement>(null),
     game = useRef<Phaser.Game | undefined>(undefined);
-  const entry =
+  const catalogEntry =
     animationCatalog.find((e) => e.id === selected) ?? animationCatalog[8];
+  const entry = interactionMode
+    ? interactionEntry(interactionRoom, interactionId)
+    : catalogEntry;
   const options = useRef({
+    holdActivity,
     phase,
     phaseProgress,
     replay,
@@ -73,6 +101,7 @@ export default function HeroinePreview() {
     time,
   });
   options.current = {
+    holdActivity,
     phase,
     phaseProgress,
     replay,
@@ -106,6 +135,8 @@ export default function HeroinePreview() {
       private room = "";
       private lastEntry = "";
       private lastReport = 0;
+      private routeKey = "";
+      private route: { x: number; y: number }[] = [];
       preload() {
         preloadHeroine(this);
         const o = options.current;
@@ -171,7 +202,7 @@ export default function HeroinePreview() {
           o.replay &&
           (!this.simulation ||
             this.simulationKey !== simKey ||
-            this.simulationTime > 24)
+            (this.simulationTime > 24 && !o.holdActivity))
         ) {
           this.simulation = new ScholarBehavior(d.config, () => 0.5, d.start);
           this.simulation.setSession(o.entry.activity);
@@ -182,7 +213,7 @@ export default function HeroinePreview() {
         if (!o.replay) this.simulation = undefined;
         if (this.simulation && o.playing) {
           this.simulationTime += Math.min(delta / 1000, 0.05);
-          if (this.simulation.engaged > 6 && !this.leaving) {
+          if (this.simulation.engaged > 6 && !this.leaving && !o.holdActivity) {
             this.simulation.walkTo(d.start);
             this.leaving = true;
           }
@@ -234,6 +265,26 @@ export default function HeroinePreview() {
           (sim
             ? heroineFrame(pose, o.reduced)
             : previewFrame(o.entry, this.elapsed, o.reduced));
+        const displayedFrame = frameForPlacement(
+          name,
+          placement,
+          pose.activityTime,
+          o.reduced,
+        );
+        const silhouette = heroineFrameBounds(displayedFrame),
+          spriteScale = placement.scale ?? 1;
+        const spriteBounds = silhouette
+          ? {
+              x:
+                placement.x +
+                (silhouette.x - heroine.canvas.footX) * spriteScale,
+              y:
+                placement.y +
+                (silhouette.y - heroine.canvas.footY) * spriteScale,
+              width: silhouette.width * spriteScale,
+              height: silhouette.height * spriteScale,
+            }
+          : undefined;
         this.view.render(pose, placement, delta / 1000, o.reduced, name);
         const cameraAnchor =
           room === "personal-study" && !o.replay
@@ -276,6 +327,15 @@ export default function HeroinePreview() {
               placement.x,
               placement.y + 10,
             );
+          if (spriteBounds)
+            this.guide
+              .lineStyle(1, 0xc3d786, 1)
+              .strokeRect(
+                spriteBounds.x,
+                spriteBounds.y,
+                spriteBounds.width,
+                spriteBounds.height,
+              );
           this.guide.lineStyle(1, 0xf39887, 0.75);
           for (const r of placement.occluders)
             this.guide.strokeRect(r.x, r.y, r.width, r.height);
@@ -287,12 +347,66 @@ export default function HeroinePreview() {
               .strokeCircle(placement.seat.x, placement.seat.y, 5);
         }
         if (o.navigation && room !== "studio") {
+          this.guide
+            .lineStyle(1, 0xf3e8cf, 0.8)
+            .strokeRect(model.position.x - 12, model.position.y - 7, 24, 12);
+          const area = d.config.bounds;
+          this.guide
+            .lineStyle(2, 0x9badf0, 0.9)
+            .strokeRect(
+              area.left,
+              area.top,
+              area.right - area.left,
+              area.bottom - area.top,
+            );
           this.guide.lineStyle(1, 0xf39887, 0.7);
           for (const r of d.config.obstacles)
-            this.guide.strokeRect(r.x, r.y, r.w, r.h);
+            this.guide.strokePoints(
+              [
+                { x: r.x, y: r.y },
+                { x: r.x + r.w, y: r.y },
+                { x: r.x + r.w, y: r.y + r.h },
+                { x: r.x, y: r.y + r.h },
+              ],
+              true,
+            );
           this.guide.fillStyle(0x8ed5c8, 0.9);
-          for (const a of d.config.activities)
-            this.guide.fillCircle(a.point.x, a.point.y, 4);
+          for (const a of d.config.activities) {
+            this.guide
+              .fillStyle(0x8ed5c8, 0.9)
+              .fillCircle(a.point.x, a.point.y, 4);
+            const p = placementFor(d.id, {
+              position: a.point,
+              activity: a,
+              state: a.state,
+              moving: false,
+              pose: a.pose,
+              offsetY: a.offsetY ?? 0,
+            });
+            if (p.seat)
+              this.guide
+                .lineStyle(2, 0xf4cb77, 0.85)
+                .strokeCircle(p.seat.x, p.seat.y, 5);
+            if (p.x !== a.point.x || p.y !== a.point.y)
+              this.guide.lineStyle(1, 0xf4cb77, 0.7).strokeCircle(p.x, p.y, 5);
+            else
+              this.guide
+                .lineStyle(1, 0xaebcf3, 0.9)
+                .strokeRect(a.point.x - 6, a.point.y - 6, 12, 12);
+          }
+          const routeKey = `${d.id}:${o.entry.activity}`;
+          if (this.routeKey !== routeKey) {
+            this.routeKey = routeKey;
+            this.route = activity
+              ? (new Navigation(d.config.bounds, d.config.obstacles).path(
+                  d.start,
+                  activity.point,
+                ) ?? [])
+              : [];
+          }
+          this.guide
+            .lineStyle(2, 0x8ed5c8, 0.7)
+            .strokePoints([d.start, ...(this.simulation?.path ?? this.route)]);
           this.guide
             .lineStyle(1, 0x8ed5c8, 0.7)
             .lineBetween(
@@ -305,18 +419,34 @@ export default function HeroinePreview() {
         if (_now - this.lastReport > 100) {
           this.lastReport = _now;
           if (alive) {
+            setInspector(
+              `Room: ${d.title} · Activity: ${o.entry.activity} · State: ${model.state} · Facing: ${pose.facing} · Scale: ${(placement.scale ?? 1).toFixed(2)} · Contact: ${placement.key} · Transition: ${placement.transition?.kind ?? "none"} · Blend: ${this.view.blending ? "transitioning" : "settled"}`,
+            );
             setReplayStatus(
               this.simulation
                 ? `${this.simulation.label} · ${this.simulation.departure ? "standing up" : this.simulation.settling ? "settling into seat" : this.leaving ? "departure" : "approach / activity"}`
                 : "",
             );
             setContact(
-              calibrationRecord(o.entry.room, o.entry.activity, placement),
+              calibrationRecord(o.entry.room, o.entry.activity, placement, {
+                walkableBounds: d.config.bounds,
+                collisionPolygons: d.config.obstacles.map((r) => [
+                  { x: r.x, y: r.y },
+                  { x: r.x + r.w, y: r.y },
+                  { x: r.x + r.w, y: r.y + r.h },
+                  { x: r.x, y: r.y + r.h },
+                ]),
+                approach: activity?.point,
+                standingAnchor: activity?.point,
+                seatedAnchor: placement.seat,
+                orientation: pose.facing,
+                state: model.state,
+                animation: displayedFrame,
+                spriteBounds,
+              }),
             );
             setTime(this.elapsed);
-            setFrame(
-              frameForPlacement(name, placement, this.elapsed, o.reduced),
-            );
+            setFrame(displayedFrame);
           }
         }
       }
@@ -359,23 +489,99 @@ export default function HeroinePreview() {
       </header>
       <div className="lab-layout">
         <aside>
-          <label>
-            Animation
-            <select
-              value={selected}
+          <label className="lab-check">
+            <input
+              type="checkbox"
+              checked={interactionMode}
               onChange={(e) => {
-                setSelected(e.target.value);
+                setInteractionMode(e.target.checked);
+                setReplay(false);
                 setRaw("");
-                scrub.current = 0;
+                setPhase("activity");
               }}
-            >
-              {animationCatalog.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.label}
-                </option>
-              ))}
-            </select>
+            />
+            Room interaction calibration
           </label>
+          {interactionMode && (
+            <section className="room-interaction-controls">
+              <label>
+                Room
+                <select
+                  value={interactionRoom}
+                  onChange={(e) => {
+                    const room = e.target.value as Interior;
+                    setInteractionRoom(room);
+                    setInteractionId(roomDefinitions[room].sessionActivity);
+                    setReplay(false);
+                    setRaw("");
+                    setContext("matching");
+                    setPhase("activity");
+                  }}
+                >
+                  {Object.values(roomDefinitions).map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Room activity
+                <select
+                  value={interactionId}
+                  onChange={(e) => {
+                    setInteractionId(e.target.value);
+                    setReplay(false);
+                    setRaw("");
+                    setPhase("activity");
+                  }}
+                >
+                  {roomDefinitions[interactionRoom].config.activities.map(
+                    (a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.label}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </label>
+              <button
+                onClick={() => {
+                  setHoldActivity(true);
+                  setReplayKey((n) => n + 1);
+                  setReplay(true);
+                  setPlaying(true);
+                  setContext("matching");
+                  setRaw("");
+                  setPhase("activity");
+                  setNavigation(true);
+                  setGuides(true);
+                  setZoom(1);
+                }}
+              >
+                Trigger selected activity
+              </button>
+            </section>
+          )}
+          {!interactionMode && (
+            <label>
+              Animation
+              <select
+                value={selected}
+                onChange={(e) => {
+                  setSelected(e.target.value);
+                  setRaw("");
+                  scrub.current = 0;
+                }}
+              >
+                {animationCatalog.map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <details open={params.has("calibration")}>
             <summary>Interaction calibration</summary>
             <label className="lab-check">
@@ -554,7 +760,9 @@ export default function HeroinePreview() {
           <p>
             Gold cross: fixed contact anchor. Teal: common{" "}
             {heroine.canvas.width} × {heroine.canvas.height} canvas. Coral:
-            foreground masks.
+            foreground masks. Lavender: walking boundary / standing anchors;
+            teal dots: approaches; gold circles: seated contacts; lime: visible
+            sprite bounds.
           </p>
           <p>
             This studio does not mount the game application, open saved
@@ -567,6 +775,7 @@ export default function HeroinePreview() {
               onClick={() => {
                 setReplayKey((n) => n + 1);
                 setReplay(true);
+                setHoldActivity(false);
                 setZoom(1);
                 setPlaying(true);
                 setNavigation(true);
@@ -579,6 +788,9 @@ export default function HeroinePreview() {
             </button>
             <output>{replayStatus}</output>
           </div>
+          <output className="lab-inspector" aria-label="Interaction details">
+            {inspector}
+          </output>
           <div ref={host} className="lab-canvas" />
           <p>
             {entry.label} ·{" "}

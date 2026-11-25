@@ -26,7 +26,7 @@ export const keepsakes = [
     name: "A growing light",
     item: "Moonstone paperweight",
     icon: "moon",
-    description: "Reach scholar level 2 (100 total XP).",
+    description: "Reach level 2 (100 total XP).",
   },
 ] as const;
 export function unlockedKeepsakes(s: State): string[] {

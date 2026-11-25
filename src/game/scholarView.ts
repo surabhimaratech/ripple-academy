@@ -53,6 +53,9 @@ export class ScholarView {
       previousMask.destroy();
     });
   }
+  get blending() {
+    return this.blend < 1;
+  }
   get headY() {
     const name = this.sprite.texture.key.replace(/^heroine-/, "");
     const height =

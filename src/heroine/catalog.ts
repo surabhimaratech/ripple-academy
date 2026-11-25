@@ -229,7 +229,15 @@ export function previewPose(e: AnimationEntry, time: number): HeroinePose {
         ? "player-controlled"
         : e.activity === "idle"
           ? "idle"
-          : "writing"),
+          : ["code", "write"].includes(e.pose)
+            ? "writing"
+            : ["read", "seated-read", "browse"].includes(e.pose)
+              ? "reading"
+              : ["sit", "tea"].includes(e.pose)
+                ? "sitting"
+                : ["observe", "globe", "examine"].includes(e.pose)
+                  ? "observing"
+                  : "idle"),
     clock: time,
     activityTime: time,
   };

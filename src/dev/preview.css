@@ -153,3 +153,19 @@ html:has(.animation-lab) {
   font: 12px monospace;
   color: #8ed5c8;
 }
+.room-interaction-controls {
+  display: grid;
+  gap: 12px;
+  border: 1px solid #6e6559;
+  padding: 12px;
+}
+.lab-layout output {
+  white-space: normal;
+  line-height: 1.6;
+}
+.lab-inspector {
+  display: block;
+  font: 12px/1.5 monospace;
+  color: #cbd6b1;
+  margin: 10px 0;
+}

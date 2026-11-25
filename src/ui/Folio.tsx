@@ -392,10 +392,10 @@ export function FolioContent({
   if (tab === "keepsakes")
     return (
       <>
-        <section className="scholar-profile" aria-label="Scholar profile">
+        <section className="scholar-profile" aria-label="Your profile">
           <HeroinePortrait />
           <div>
-            <span className="eyebrow">YOUR SCHOLAR</span>
+            <span className="eyebrow">YOUR JOURNEY</span>
             <h3>{academicRank(state.xp)}</h3>
             <p>
               Level {progression(state.xp).level} · {state.xp} XP
@@ -405,8 +405,8 @@ export function FolioContent({
           </div>
         </section>
         <p className="folio-intro">
-          Small reminders of the scholar you’re becoming. Once earned, a
-          keepsake is yours to keep.
+          Small reminders of the person you’re becoming. Once earned, a keepsake
+          is yours to keep.
         </p>
         <div className="collection-count">
           {unlocked.length} / {keepsakes.length} keepsakes found

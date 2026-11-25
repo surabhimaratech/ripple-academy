@@ -236,8 +236,8 @@ describe("real-world sessions", () => {
     expect([s.xp, s.gold]).toEqual([0, 0]);
   });
   it("academic titles derive from XP without introducing another economy", () => {
-    expect(academicRank(0)).toBe("Curious scholar");
-    expect(academicRank(100)).toBe("Inquisitive scholar");
-    expect(academicRank(400)).toBe("Independent scholar");
+    expect(academicRank(0)).toBe("Curious explorer");
+    expect(academicRank(100)).toBe("Inquisitive explorer");
+    expect(academicRank(400)).toBe("Independent explorer");
   });
 });

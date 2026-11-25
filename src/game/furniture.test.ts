@@ -96,13 +96,19 @@ it("keeps desk typing, thinking, consulting and writing on the same chair, and h
   expect(reduced.transition).toBeUndefined();
   expect([reduced.x, reduced.y]).toEqual([p.x, p.y]);
 });
-it("keeps window observation on the floor facing the actual window, not the cabinet", () => {
+it("uses the reachable desk chair for window observation rather than a misleading floor waypoint", () => {
   const b = occupied("study-window");
   expect(b.position).toEqual(windowVantage.point);
   expect(b.facing).toBe("up");
   const p = placementFor(d.id, b);
-  expect([p.x, p.y]).toEqual([b.position.x, b.position.y]);
-  expect(frameForPlacement("window-thought", p)).toBe("window");
+  expect(p.key).toBe("study-desk");
+  expect([p.x, p.y]).toEqual([
+    studyFurniture.desk.contact.x,
+    studyFurniture.desk.contact.y,
+  ]);
+  expect(frameForPlacement("window-thought", p)).toBe("study-think");
+  expect(b.nav.valid(b.position)).toBe(true);
+  expect(b.position).toEqual(studyFurniture.desk.approach);
 });
 it("keeps celebration and pause/resume compatible with furniture entry and exit", () => {
   const b = occupied();

@@ -100,7 +100,7 @@ export class ScholarBehavior {
   ) {
     this.nav = new Navigation(room.bounds, room.obstacles);
     if (!this.nav.valid(start))
-      throw Error("Scholar must start on accessible floor.");
+      throw Error("Character must start on accessible floor.");
     this.position = { ...start };
     this.remaining = this.range(4, 7);
   }

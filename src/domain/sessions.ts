@@ -53,12 +53,12 @@ export function activeSession(s: State) {
 }
 export function academicRank(xp: number) {
   return xp >= 900
-    ? "University fellow"
+    ? "Lifelong explorer"
     : xp >= 400
-      ? "Independent scholar"
+      ? "Independent explorer"
       : xp >= 100
-        ? "Inquisitive scholar"
-        : "Curious scholar";
+        ? "Inquisitive explorer"
+        : "Curious explorer";
 }
 export type SessionAction =
   | { type: "saveCategory"; category: ActivityCategory }

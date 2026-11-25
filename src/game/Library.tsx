@@ -623,7 +623,7 @@ export function Library({
           <span className="keycap">W A S D</span>
           <span>
             {blocked
-              ? "Your scholar continues her activities while the journal is open."
+              ? "She continues her day while you use the journal."
               : prompt}
           </span>
         </div>

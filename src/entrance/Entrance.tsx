@@ -205,7 +205,7 @@ export function Entrance({
                 <h2 id="grounds-title">
                   Welcome back,
                   <br />
-                  <em>scholar.</em>
+                  <em>explorer.</em>
                 </h2>
               </div>
               <p className="grounds-introduction">
@@ -213,10 +213,7 @@ export function Entrance({
                 <br />
                 There is no hurry. Your next chapter is yours.
               </p>
-              <div
-                className="grounds-progress"
-                aria-label="Your academic progress"
-              >
+              <div className="grounds-progress" aria-label="Your progress">
                 <span>
                   {academicRank(state?.xp ?? 0)}
                   <small>Level {p.level}</small>

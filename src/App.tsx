@@ -489,7 +489,7 @@ export default function App() {
             aria-pressed={autonomous}
             onClick={toggleAutonomy}
           >
-            {autonomous ? "Scholar: autonomous" : "Manual control"}
+            {autonomous ? "Autonomous movement" : "Manual control"}
           </button>
           <button className="ambient-toggle" onClick={enterAmbient}>
             Ambient view
@@ -599,7 +599,7 @@ export default function App() {
         )}
         <section
           className={`rpg-hud ${celebration ? "has-earned" : ""}`}
-          aria-label="Scholar progression"
+          aria-label="Your progress"
         >
           <div className="hud-portrait" aria-hidden="true">
             <HeroinePortrait decorative />
@@ -715,7 +715,7 @@ export default function App() {
             <div className="folio-binding" />
             <div className="folio-top">
               <div>
-                <span className="eyebrow">THE SCHOLAR’S JOURNAL</span>
+                <span className="eyebrow">JOURNAL</span>
                 <h2 tabIndex={-1} ref={folioHeading}>
                   {tabs.find((t) => t.id === tab)?.label}
                 </h2>
@@ -996,8 +996,8 @@ export default function App() {
                       objects directly, or use the command bar below.
                     </p>
                     <p>
-                      Esc closes the journal. Manual input pauses while menus are
-                      open; autonomous activities continue.
+                      Esc closes the journal. Manual input pauses while menus
+                      are open; autonomous activities continue.
                     </p>
                   </section>
                 </div>

@@ -178,8 +178,14 @@ Artwork limits: the supplied illustration remains a flattened image and the live
 
 ## Study interaction calibration — Milestone 2.4.1
 
-The Study now has furniture-compatible desk and armchair poses, satchel-free seated activities, shared furniture contacts, polygon foreground masks, contact shadows and drawn sit/stand transitions. Reading, resting and tea retain the same occupied-chair position; desk work keeps a consistent chair contact. Reflection faces the large window from accessible floor. The approved room and original heroine PNGs remain intact.
+The Study now has furniture-compatible desk and armchair poses, satchel-free seated activities, shared furniture contacts, polygon foreground masks, contact shadows and drawn sit/stand transitions. Reading, resting and tea retain the same occupied-chair position; desk work keeps a consistent chair contact. Reflection uses the desk chair beneath the large window. The approved room and original heroine PNGs remain intact.
 
 Development preview: `/?preview=heroine&animation=study-reading`. Open **Interaction calibration** to adjust contact X/Y/scale, inspect collision/approach guides, read calibration JSON and freeze entry/exit phases. **Replay approach → sit → activity → leave** runs the real behavior/navigation code without opening saved progress. **Compare original 2.4 contacts** provides a matched before view. Useful query parameters: `baseline=1`, `still=1`, `t=11.5`, `zoom=1|2|3`, `guides=0`, `calibration=1`, `renderer=canvas`. The preview is development-only.
 
 See [the milestone report](docs/MILESTONE-2.4.1.md) for selected asset dimensions, original-pose diagnosis, replacement specifications and furniture relocation dependencies. Furniture was not moved; no Happy Café work was included. Normal controls, saved progress and all XP/gold rules are preserved.
+
+## Room interaction preview and Study follow-up
+
+Use `/?preview=heroine&interaction=1&room=personal-study&activity=study-window` during development. **Room interaction calibration** lists every configured activity in all three existing rooms. Choose one, then **Trigger selected activity** to watch its real approach and hold the activity. Turn off room calibration to inspect individual animation clips. Walking bounds, collisions/routes, approaches, seated/standing anchors, sprite bounds, masks, current frame/facing/scale and blend status are available as overlays and calibration JSON. No saved progress is opened by this preview.
+
+Window reflection now uses the desk chair beneath the window, reusing the compatible thoughtful desk pose. The armchair/side table have not been crudely moved out of the flattened background. See [the follow-up report](docs/STUDY-FOLLOWUP.md) for the exact clean-plate, furniture, shadow, inward-facing sprite requirements and requested before/after screenshots. Player-facing labels use “explorer” and “Journal”; XP thresholds and saved data are unchanged. Happy Café remains out of scope.

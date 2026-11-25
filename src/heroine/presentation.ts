@@ -82,13 +82,6 @@ export function placementFor(
       );
   }
   if (!engaged) return base;
-  if (room === "personal-study" && b.activity?.id === "study-window")
-    return {
-      ...base,
-      key: "study-window",
-      frames: { "window-thought": "window" },
-      tint: 0xfff6eb,
-    };
   const id = b.activity!.id;
   const anchor = room === "personal-study" && furnitureForActivity(id);
   if (anchor)

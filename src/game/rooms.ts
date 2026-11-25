@@ -93,8 +93,10 @@ const study: RoomConfig = {
     }),
     make({
       id: "study-window",
+      furniture: studyFurniture.desk.id,
+      offsetY: -42,
       state: "observing",
-      label: "Watching the sunset through the study window",
+      label: "Watching the sunset from her desk",
       point: windowVantage.point,
       facing: "up",
       pose: "observe",

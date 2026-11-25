@@ -6,6 +6,10 @@ import {
   registeredFrames,
   type Rect,
 } from "./atlas";
+const frameBounds = new Map<string, Rect>();
+export function heroineFrameBounds(name: string) {
+  return frameBounds.get(`heroine-${name}`);
+}
 const normalized = new Map<string, HTMLCanvasElement>();
 export function preloadHeroine(scene: Phaser.Scene) {
   for (const atlas of heroine.atlases)
@@ -91,6 +95,7 @@ export function createHeroineTextures(scene: Phaser.Scene) {
           d.height,
         );
         normalized.set(f.name, canvas);
+        frameBounds.set(f.name, d);
       });
     }
     for (const f of atlas.frames) {
