@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { roomDefinitions } from "./rooms";
+import { preloadHeroine } from "../heroine/textures";
 import { ScholarView } from "./scholarView";
 import { ScholarBehavior } from "./behavior";
 import type { Interior } from "../domain/sessions";
@@ -30,6 +31,9 @@ export function renderRoomPreview(id: Interior): Promise<string> {
         class Preview extends Phaser.Scene {
           constructor() {
             super(`preview-${id}`);
+          }
+          preload() {
+            preloadHeroine(this);
           }
           create() {
             try {

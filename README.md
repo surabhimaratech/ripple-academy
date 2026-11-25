@@ -48,7 +48,7 @@ See the [entrance architecture and artwork replacement guide](docs/ENTRANCE-ARTW
 
 ## Your living scholar
 
-Autonomous activities are enabled by default. She walks to meaningful places, browses shelves, selects books, reads in the armchair or by a window, writes, examines the globe, observes the sky and takes breaks. The Study adds laptop work; the Observatory adds telescope observation, star-atlas notes and astronomy books.
+Autonomous activities are enabled by default. She walks to meaningful places, browses shelves, selects books, reads in the armchair or by a window, writes, examines the globe, observes the sky and takes breaks. The Study adds laptop and notebook work; the Observatory adds telescope observation, star-atlas notes and astronomy books.
 
 Weighted selection reduces recent repeats, and randomized engagements are longer than walks. Original activity poses include reaching for a book, reading/page turning, writing, typing/consulting a book, sitting, stretching and adjusting her hair. Occasional thoughts are infrequent, optional and never generate tasks or notifications.
 
@@ -68,13 +68,24 @@ Manual movement takes priority. Autonomy resumes after about 20 seconds of inact
 
 The scholar keeps going while you use the folio. The room stops rendering and simulating when the tab is hidden, then resumes without catch-up. Position and behavior are temporary; no offline character progress or inactivity penalties exist. Reduced motion uses still walking poses and quiet, static reward feedback. Manual-only mode is available if you prefer no independent movement.
 
+## The heroine
+
+The scholar now follows the approved Ripple Academy character design: wavy dark brown hair and purple ribbon, purple/gold embroidered academic jacket, ivory blouse, charcoal skirt, tights, leather boots, dolphin brooch and satchel. The original reference is preserved in `public/art/references/`; the entire presentation sheet is never used as a game texture.
+
+The shared transparent artwork set includes a portrait, four directional idle/blink/stride sets and activity poses for reading, typing, writing, telescope observation, window watching, resting, browsing and celebrating. The portrait appears in the courtyard, RPG HUD and **Keepsake chest → Scholar profile**. The old block character and SVG portrait have been removed.
+
+`public/art/heroine/animations.json` controls source grids, named poses and frame timing. The renderer normalizes alpha silhouettes into aligned 96 × 144 canvases, with the same foot anchor and uniform scaling. Reduced motion uses still poses and disables blinking/breathing. Room artwork, navigation, autonomous behavior and rewards remain separate.
+
+These are short animation cycles rather than a full eight-frame hand-authored production set. Window/rest/browse/celebration use authored still poses with limited variations. Additional directional activity poses, sit/stand transitions and exact desk/telescope contact artwork remain artist refinements. See the [complete asset and animation status](docs/art/HEROINE-PRODUCTION.md).
+
 ## Real-world activity sessions
 
 Open **Activities** or choose **Begin a real-world activity** on the entrance screen.
 
 Default mappings:
 
-- Coding, engineering and interview preparation → Personal Study.
+- Coding, engineering and interview preparation → typing in Personal Study.
+- Journaling → notebook writing in Personal Study (new default activity).
 - Reading/literature and history → Grand Library.
 - Astronomy and physics → Observatory.
 
@@ -129,17 +140,20 @@ Saves belong to this browser profile and origin. Clearing storage removes the ac
 - `src/game/behavior.ts`: reusable finite-state scholar controller, weighted activities, manual override, session direction, thoughts and celebration resumption. No React, Phaser, storage, XP or gold code.
 - `src/game/navigation.ts`, `movement.ts`: cached grid, route finding, collision clearance and manual movement primitives.
 - `src/game/room.ts`, `rooms.ts`: room-specific destinations, interaction bounds, solids, spawn points and session behavior mappings.
-- `src/game/art.ts`, `interiorArt.ts`, `scholar.ts`, `scholarView.ts`: original art, directional/animated activity poses and depth-sorted rendering.
+- `src/game/art.ts`, `interiorArt.ts`: original room artwork.
+- `src/heroine/`: canonical atlas manifest, alpha/foot normalization, visual animation selection and Phaser texture registration.
+- `src/game/scholarView.ts`: canonical sprite selection, furniture offsets and depth-sorted rendering.
+- `src/game/sessionActivity.ts`: explicit activity intent mapped to existing room activities; no rewards or storage.
 - `src/entrance/`: React entrance stages, seven-layer Canvas2D panorama, asset manifest, scroll math and lazy room previews.
 - `src/game/roomPreview.ts`: one-shot snapshots of the actual room painters; no persistence access.
 - `src/game/atmosphere.ts`: local time palette helpers. `exterior.ts` retains the earlier exterior renderer for reference and supplies the interior fade helper; the earlier exterior is no longer mounted.
 - `src/game/Library.tsx`: React/Phaser bridge and visibility/resize lifecycle for the scene registry.
 - `src/ui/`: accessible folio/editor/session/curriculum controls, preferences and optional sound.
 
-Plans: [original architecture](docs/PLAN.md), [visual polish](docs/MILESTONE-1.5.md), [living scholar](docs/MILESTONE-1.6.md), [university milestone](docs/MILESTONE-2.md). See the [Ripple entrance plan](docs/MILESTONE-2.1.md) , the [continuous arrival plan](docs/MILESTONE-2.2.md), and [current verification](docs/VERIFICATION-MILESTONE-2.2.md).
+Plans: [original architecture](docs/PLAN.md), [visual polish](docs/MILESTONE-1.5.md), [living scholar](docs/MILESTONE-1.6.md), [university milestone](docs/MILESTONE-2.md). See the [Ripple entrance plan](docs/MILESTONE-2.1.md) , the [continuous arrival plan](docs/MILESTONE-2.2.md), and [current verification](docs/VERIFICATION-MILESTONE-2.3.md).
 
 ## Art and attribution
 
-Library, Study, Observatory, scholar, crest, portrait and keepsake artwork is original, authored in TypeScript, SVG and CSS for this project. The entrance adds original raster assets generated with OpenAI ImageGen: academy architecture, courtyard, foreground foliage, carved gateway and ornate wooden doors. Supporting sky, mountain, mist, lake and forest layers are original SVG. See [asset provenance and final prompts](docs/ARTWORK-PROMPTS.md). The architecture, identity and silhouettes are original; no franchise assets, third-party sprites, fonts, photographs or music are used. Reward tones are synthesized locally with Web Audio. Dependencies retain their own licenses in `node_modules`.
+Library, Study, Observatory, crest and keepsake artwork is original, authored in TypeScript, SVG and CSS for this project. The canonical heroine portrait and transparent pose atlases were generated from the user-approved design reference using the built-in ImageGen tool; see [heroine provenance, prompts and asset status](docs/art/HEROINE-PRODUCTION.md). The entrance adds original raster assets generated with OpenAI ImageGen: academy architecture, courtyard, foreground foliage, carved gateway and ornate wooden doors. Supporting sky, mountain, mist, lake and forest layers are original SVG. See [asset provenance and final prompts](docs/ARTWORK-PROMPTS.md). The architecture, identity and silhouettes are original; no franchise assets, third-party sprites, fonts, photographs or music are used. Reward tones are synthesized locally with Web Audio. Dependencies retain their own licenses in `node_modules`.
 
 The scope remains three intimate rooms and a university entrance. There is no combat, survival system, character needs, authentication, cloud service, mobile layout, external application monitoring or dragon storyline.

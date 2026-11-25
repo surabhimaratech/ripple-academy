@@ -39,6 +39,7 @@ export const defaultCategories: ActivityCategory[] = [
   { id: "coding", title: "Coding", room: "personal-study" },
   { id: "engineering", title: "Engineering", room: "personal-study" },
   { id: "interview", title: "Interview preparation", room: "personal-study" },
+  { id: "journaling", title: "Journaling", room: "personal-study" },
   { id: "reading", title: "Reading & literature", room: "grand-library" },
   { id: "history", title: "History", room: "grand-library" },
   { id: "astronomy", title: "Astronomy", room: "observatory" },

@@ -1,3 +1,6 @@
+import { HeroinePortrait } from "./HeroinePortrait";
+import { academicRank } from "../domain/sessions";
+import { progression } from "../domain/model";
 import { useState } from "react";
 import type { State, Action, Quest, Reward, Discovery } from "../domain/model";
 import { keepsakes, unlockedKeepsakes } from "../domain/keepsakes";
@@ -286,6 +289,18 @@ export function FolioContent({
   if (tab === "keepsakes")
     return (
       <>
+        <section className="scholar-profile" aria-label="Scholar profile">
+          <HeroinePortrait />
+          <div>
+            <span className="eyebrow">YOUR SCHOLAR</span>
+            <h3>{academicRank(state.xp)}</h3>
+            <p>
+              Level {progression(state.xp).level} · {state.xp} XP
+            </p>
+            <p>◈ {state.gold} gold</p>
+            <small>Through curiosity, to the stars.</small>
+          </div>
+        </section>
         <p className="folio-intro">
           Small reminders of the scholar you’re becoming. Once earned, a
           keepsake is yours to keep.

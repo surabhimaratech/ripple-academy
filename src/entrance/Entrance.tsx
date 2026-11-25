@@ -9,6 +9,7 @@ import type { State } from "../domain/model";
 import { progression } from "../domain/model";
 import type { Tab } from "../ui/Folio";
 import { Panorama } from "./Panorama";
+import { HeroinePortrait } from "../ui/HeroinePortrait";
 import { RoomPreview } from "./RoomPreview";
 import { entranceArt } from "./assets";
 import { useJourney } from "./useJourney";
@@ -199,11 +200,14 @@ export function Entrance({
               <span className="entrance-section-label">
                 I. &nbsp; WITHIN THE GROUNDS
               </span>
-              <h2 id="grounds-title">
-                Welcome back,
-                <br />
-                <em>scholar.</em>
-              </h2>
+              <div className="welcome-heading">
+                <HeroinePortrait className="courtyard-portrait" />
+                <h2 id="grounds-title">
+                  Welcome back,
+                  <br />
+                  <em>scholar.</em>
+                </h2>
+              </div>
               <p className="grounds-introduction">
                 A quiet place for the person you’re becoming.
                 <br />

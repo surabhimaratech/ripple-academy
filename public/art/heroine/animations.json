@@ -1,0 +1,246 @@
+{
+  "version": 1,
+  "portrait": "/art/heroine/portrait.png",
+  "canvas": {
+    "width": 96,
+    "height": 144,
+    "footX": 48,
+    "footY": 136
+  },
+  "atlases": [
+    {
+      "id": "locomotion",
+      "src": "/art/heroine/locomotion.png",
+      "columns": 4,
+      "rows": 4,
+      "frames": [
+        {
+          "name": "idle-down",
+          "row": 0,
+          "column": 0,
+          "height": 112
+        },
+        {
+          "name": "blink-down",
+          "row": 0,
+          "column": 1,
+          "height": 112
+        },
+        {
+          "name": "walk-a-down",
+          "row": 0,
+          "column": 2,
+          "height": 112
+        },
+        {
+          "name": "walk-b-down",
+          "row": 0,
+          "column": 3,
+          "height": 112
+        },
+        {
+          "name": "idle-right",
+          "row": 1,
+          "column": 0,
+          "height": 112
+        },
+        {
+          "name": "blink-right",
+          "row": 1,
+          "column": 1,
+          "height": 112
+        },
+        {
+          "name": "walk-a-right",
+          "row": 1,
+          "column": 2,
+          "height": 112
+        },
+        {
+          "name": "walk-b-right",
+          "row": 1,
+          "column": 3,
+          "height": 112
+        },
+        {
+          "name": "idle-up",
+          "row": 2,
+          "column": 0,
+          "height": 112
+        },
+        {
+          "name": "blink-up",
+          "row": 2,
+          "column": 1,
+          "height": 112
+        },
+        {
+          "name": "walk-a-up",
+          "row": 2,
+          "column": 2,
+          "height": 112
+        },
+        {
+          "name": "walk-b-up",
+          "row": 2,
+          "column": 3,
+          "height": 112
+        },
+        {
+          "name": "idle-left",
+          "row": 3,
+          "column": 0,
+          "height": 112
+        },
+        {
+          "name": "blink-left",
+          "row": 3,
+          "column": 1,
+          "height": 112
+        },
+        {
+          "name": "walk-a-left",
+          "row": 3,
+          "column": 2,
+          "height": 112
+        },
+        {
+          "name": "walk-b-left",
+          "row": 3,
+          "column": 3,
+          "height": 112
+        }
+      ]
+    },
+    {
+      "id": "activities",
+      "src": "/art/heroine/activities.png",
+      "columns": 4,
+      "rows": 3,
+      "frames": [
+        {
+          "name": "read-seated",
+          "row": 0,
+          "column": 0,
+          "height": 88
+        },
+        {
+          "name": "read-page",
+          "row": 0,
+          "column": 1,
+          "height": 88
+        },
+        {
+          "name": "type-a",
+          "row": 0,
+          "column": 2,
+          "height": 88
+        },
+        {
+          "name": "type-b",
+          "row": 0,
+          "column": 3,
+          "height": 88
+        },
+        {
+          "name": "write-a",
+          "row": 1,
+          "column": 0,
+          "height": 88
+        },
+        {
+          "name": "write-b",
+          "row": 1,
+          "column": 1,
+          "height": 88
+        },
+        {
+          "name": "observe-provisional",
+          "row": 1,
+          "column": 2,
+          "height": 112
+        },
+        {
+          "name": "window",
+          "row": 1,
+          "column": 3,
+          "height": 112
+        },
+        {
+          "name": "rest",
+          "row": 2,
+          "column": 0,
+          "height": 88
+        },
+        {
+          "name": "browse",
+          "row": 2,
+          "column": 1,
+          "height": 112
+        },
+        {
+          "name": "read-standing",
+          "row": 2,
+          "column": 2,
+          "height": 112
+        },
+        {
+          "name": "celebrate",
+          "row": 2,
+          "column": 3,
+          "height": 112
+        }
+      ]
+    },
+    {
+      "id": "telescope",
+      "src": "/art/heroine/telescope.png",
+      "columns": 2,
+      "rows": 1,
+      "frames": [
+        {
+          "name": "telescope-a",
+          "row": 0,
+          "column": 0,
+          "height": 112
+        },
+        {
+          "name": "telescope-b",
+          "row": 0,
+          "column": 1,
+          "height": 112
+        }
+      ]
+    }
+  ],
+  "clips": {
+    "walk-down": {
+      "frames": ["idle-down", "walk-a-down", "idle-down", "walk-b-down"],
+      "frameMs": 170
+    },
+    "walk-right": {
+      "frames": ["idle-right", "walk-a-right", "idle-right", "walk-b-right"],
+      "frameMs": 170
+    },
+    "walk-up": {
+      "frames": ["idle-up", "walk-a-up", "idle-up", "walk-b-up"],
+      "frameMs": 170
+    },
+    "walk-left": {
+      "frames": ["idle-left", "walk-a-left", "idle-left", "walk-b-left"],
+      "frameMs": 170
+    },
+    "typing": {
+      "frames": ["type-a", "type-b"],
+      "frameMs": 650
+    },
+    "writing": {
+      "frames": ["write-a", "write-b"],
+      "frameMs": 900
+    },
+    "telescope": {
+      "frames": ["telescope-a", "telescope-b"],
+      "frameMs": 2200
+    }
+  }
+}

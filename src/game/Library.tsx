@@ -9,6 +9,8 @@ import {
 import { transition } from "./exterior";
 import type { Location, ActivitySession } from "../domain/sessions";
 import { ScholarBehavior } from "./behavior";
+import { preloadHeroine } from "../heroine/textures";
+import { sessionPlan } from "./sessionActivity";
 import { ScholarView } from "./scholarView";
 export interface Celebration {
   xp: number;
@@ -38,6 +40,9 @@ class GrandLibrary extends Phaser.Scene {
   private effects = new Set<Phaser.GameObjects.GameObject>();
   constructor(private definition: RoomDefinition) {
     super(definition.id);
+  }
+  preload() {
+    preloadHeroine(this);
   }
   create() {
     this.reduced = !!this.registry.get("reduced");
@@ -153,13 +158,12 @@ class GrandLibrary extends Phaser.Scene {
     const session = () => {
       const active = this.registry.get("session") as
         ActivitySession | undefined;
+      const plan = sessionPlan(this.definition, active);
       this.behavior.setSession(
-        active?.room === this.definition.id
-          ? this.definition.sessionActivity
-          : undefined,
+        plan?.activity,
         active?.room === this.definition.id && active?.phase === "paused",
-        this.definition.sessionVariations,
-        this.definition.sessionIntro,
+        plan?.variations,
+        plan?.intro,
       );
     };
     const navigate = (next: Location) => transition(this, next, this.reduced);
@@ -210,7 +214,7 @@ class GrandLibrary extends Phaser.Scene {
     if (object)
       this.prompt.setPosition(
         Math.min(1090, Math.max(190, object.point.x)),
-        object.point.y - 110,
+        object.point.y - 145,
       );
     if (label !== this.lastPrompt) {
       this.lastPrompt = label;
@@ -226,7 +230,7 @@ class GrandLibrary extends Phaser.Scene {
         .setText(thought.text)
         .setPosition(
           Math.min(1125, Math.max(155, this.heroine.x)),
-          this.heroine.y - 109,
+          this.heroine.y - 127,
         );
     const status = {
       label: this.behavior.label,
@@ -243,7 +247,7 @@ class GrandLibrary extends Phaser.Scene {
     this.behavior.celebrate();
     const { xp, gold, levelUp } = event;
     const x = this.heroine.x,
-      y = this.heroine.y - 95;
+      y = this.heroine.y - 125;
     const text = this.add
       .text(x, y, `+${xp} XP  ·  +${gold} gold`, {
         fontFamily: "monospace",

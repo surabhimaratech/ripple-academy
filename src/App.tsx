@@ -22,6 +22,7 @@ import {
   type ChangeEvent,
 } from "react";
 import type { Celebration } from "./game/Library";
+import { HeroinePortrait } from "./ui/HeroinePortrait";
 import { Entrance } from "./entrance/Entrance";
 import { resumeDestination } from "./entrance/scroll";
 const Library = lazy(() =>
@@ -492,7 +493,7 @@ export default function App() {
           aria-label="Scholar progression"
         >
           <div className="hud-portrait" aria-hidden="true">
-            <img src="/scholar-portrait.svg" alt="" />
+            <HeroinePortrait decorative />
           </div>
           <div className="hud-details">
             <div className="hud-name">

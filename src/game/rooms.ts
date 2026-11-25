@@ -51,6 +51,18 @@ const study: RoomConfig = {
       ],
     }),
     make({
+      id: "study-write",
+      state: "writing",
+      label: "Writing in her notebook",
+      point: { x: 655, y: 490 },
+      facing: "up",
+      pose: "write",
+      offsetY: -42,
+      seconds: [35, 60],
+      weight: 1.8,
+      thoughts: ["A thought worth keeping.", "A page of her own."],
+    }),
+    make({
       id: "study-books",
       state: "reading",
       label: "Consulting the study books",
