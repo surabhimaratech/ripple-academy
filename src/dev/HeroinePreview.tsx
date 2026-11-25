@@ -1,3 +1,12 @@
+import { furnitureForActivity } from "../game/furniture";
+import { ScholarBehavior } from "../game/behavior";
+import { heroineFrame } from "../heroine/animation";
+import {
+  calibratePlacement,
+  calibrationRecord,
+  neutralCalibration,
+} from "./calibration";
+import { baselinePlacementFor } from "./baseline";
 import { preloadStudy } from "../game/studyArt";
 import { useEffect, useRef, useState } from "react";
 import Phaser from "phaser";
@@ -10,29 +19,49 @@ import { heroine, frameNames } from "../heroine/assets";
 import { preloadHeroine } from "../heroine/textures";
 import { ScholarView } from "../game/scholarView";
 import { roomDefinitions } from "../game/rooms";
-import { placementFor, type Placement } from "../heroine/presentation";
+import {
+  placementFor,
+  frameForPlacement,
+  type Placement,
+} from "../heroine/presentation";
 import type { Interior } from "../domain/sessions";
 import "./preview.css";
 
 export default function HeroinePreview() {
   const params = new URLSearchParams(location.search);
+  const [calibration, setCalibration] = useState(neutralCalibration);
+  const [baseline, setBaseline] = useState(params.get("baseline") === "1");
+  const [navigation, setNavigation] = useState(false);
+  const [contact, setContact] = useState("");
   const [selected, setSelected] = useState(params.get("animation") ?? "work");
   const [context, setContext] = useState(params.get("context") ?? "matching");
-  const [playing, setPlaying] = useState(true),
+  const [phase, setPhase] = useState("activity");
+  const [phaseProgress, setPhaseProgress] = useState(0.5);
+  const [replay, setReplay] = useState(false);
+  const [replayKey, setReplayKey] = useState(0);
+  const [replayStatus, setReplayStatus] = useState("");
+  const [playing, setPlaying] = useState(!params.has("still")),
     [reduced, setReduced] = useState(
       matchMedia("(prefers-reduced-motion: reduce)").matches,
     );
-  const [guides, setGuides] = useState(true),
+  const [guides, setGuides] = useState(params.get("guides") !== "0"),
     [occlusion, setOcclusion] = useState(true),
     [raw, setRaw] = useState("");
-  const [zoom, setZoom] = useState(2),
-    [time, setTime] = useState(0),
+  const [zoom, setZoom] = useState(Number(params.get("zoom") ?? 2)),
+    [time, setTime] = useState(Number(params.get("t") ?? 0)),
     [frame, setFrame] = useState("");
   const host = useRef<HTMLDivElement>(null),
     game = useRef<Phaser.Game | undefined>(undefined);
   const entry =
     animationCatalog.find((e) => e.id === selected) ?? animationCatalog[8];
   const options = useRef({
+    phase,
+    phaseProgress,
+    replay,
+    replayKey,
+    calibration,
+    baseline,
+    navigation,
     entry,
     context,
     playing,
@@ -44,6 +73,13 @@ export default function HeroinePreview() {
     time,
   });
   options.current = {
+    phase,
+    phaseProgress,
+    replay,
+    replayKey,
+    calibration,
+    baseline,
+    navigation,
     entry,
     context,
     playing,
@@ -62,7 +98,11 @@ export default function HeroinePreview() {
     class Preview extends Phaser.Scene {
       private view!: ScholarView;
       private guide!: Phaser.GameObjects.Graphics;
-      private elapsed = 0;
+      private elapsed = Number(params.get("t") ?? 0);
+      private simulation?: ScholarBehavior;
+      private simulationKey = "";
+      private simulationTime = 0;
+      private leaving = false;
       private room = "";
       private lastEntry = "";
       private lastReport = 0;
@@ -126,7 +166,35 @@ export default function HeroinePreview() {
         const activity = d.config.activities.find(
           (a) => a.id === o.entry.activity,
         );
-        const model = {
+        const simKey = `${o.entry.id}:${o.replayKey}`;
+        if (
+          o.replay &&
+          (!this.simulation ||
+            this.simulationKey !== simKey ||
+            this.simulationTime > 24)
+        ) {
+          this.simulation = new ScholarBehavior(d.config, () => 0.5, d.start);
+          this.simulation.setSession(o.entry.activity);
+          this.simulationKey = simKey;
+          this.simulationTime = 0;
+          this.leaving = false;
+        }
+        if (!o.replay) this.simulation = undefined;
+        if (this.simulation && o.playing) {
+          this.simulationTime += Math.min(delta / 1000, 0.05);
+          if (this.simulation.engaged > 6 && !this.leaving) {
+            this.simulation.walkTo(d.start);
+            this.leaving = true;
+          }
+          this.simulation.step(Math.min(delta / 1000, 0.05));
+        }
+        const model = this.simulation ?? {
+          settling: o.phase === "arrive" ? 1.2 * (1 - o.phaseProgress) : 0,
+          departure:
+            o.phase === "leave"
+              ? Math.max(0.00001, 1.2 * (1 - o.phaseProgress))
+              : 0,
+          departingActivity: o.phase === "leave" ? activity : undefined,
           position: activity?.point ?? d.start,
           activity,
           state: previewPose(o.entry, this.elapsed).state,
@@ -134,7 +202,10 @@ export default function HeroinePreview() {
           pose: o.entry.pose,
           offsetY: activity?.offsetY ?? 0,
         };
-        let placement: Placement = placementFor(o.entry.room, model);
+        let placement: Placement = (
+          o.baseline ? baselinePlacementFor : placementFor
+        )(o.entry.room, model, o.reduced);
+        placement = calibratePlacement(placement, o.calibration);
         if (room === "studio")
           placement = {
             x: 640,
@@ -143,21 +214,54 @@ export default function HeroinePreview() {
             key: o.entry.id,
             occluders: [],
           };
-        if (!o.occlusion) placement = { ...placement, occluders: [] };
-        const pose = previewPose(o.entry, this.elapsed),
-          name = o.raw || previewFrame(o.entry, this.elapsed, o.reduced);
+        if (!o.occlusion)
+          placement = { ...placement, occluders: [], foreground: [] };
+        const sim = this.simulation;
+        const pose = sim
+          ? {
+              facing: sim.facing,
+              moving: sim.moving,
+              engaged: !!sim.activity,
+              pose: sim.pose,
+              activityId: sim.activity?.id,
+              state: sim.state,
+              clock: this.simulationTime,
+              activityTime: sim.engaged,
+            }
+          : previewPose(o.entry, this.elapsed);
+        const name =
+          o.raw ||
+          (sim
+            ? heroineFrame(pose, o.reduced)
+            : previewFrame(o.entry, this.elapsed, o.reduced));
         this.view.render(pose, placement, delta / 1000, o.reduced, name);
+        const cameraAnchor =
+          room === "personal-study" && !o.replay
+            ? furnitureForActivity(o.entry.activity)
+            : undefined;
         this.cameras.main
           .setZoom(o.zoom)
           .centerOn(
-            o.zoom > 1 ? placement.x : 640,
-            o.zoom > 1 ? placement.y - 55 : 360,
+            o.zoom > 1 ? (cameraAnchor?.contact.x ?? placement.x) : 640,
+            o.zoom > 1
+              ? cameraAnchor
+                ? cameraAnchor.contact.y - 58 * cameraAnchor.scale
+                : placement.y -
+                  (o.entry.room === "personal-study"
+                    ? 58 * (placement.scale ?? 1)
+                    : 55)
+              : 360,
           );
         this.guide.clear();
         if (o.guides) {
           this.guide
             .lineStyle(1, 0x8bdccf, 0.8)
-            .strokeRect(placement.x - 48, placement.y - 136, 96, 144);
+            .strokeRect(
+              placement.x - 48 * (placement.scale ?? 1),
+              placement.y - 136 * (placement.scale ?? 1),
+              96 * (placement.scale ?? 1),
+              144 * (placement.scale ?? 1),
+            );
           this.guide
             .lineStyle(2, 0xeed191)
             .lineBetween(
@@ -175,12 +279,44 @@ export default function HeroinePreview() {
           this.guide.lineStyle(1, 0xf39887, 0.75);
           for (const r of placement.occluders)
             this.guide.strokeRect(r.x, r.y, r.width, r.height);
+          for (const polygon of placement.foreground ?? [])
+            this.guide.strokePoints(polygon, true);
+          if (placement.seat)
+            this.guide
+              .lineStyle(2, 0xf4cb77)
+              .strokeCircle(placement.seat.x, placement.seat.y, 5);
+        }
+        if (o.navigation && room !== "studio") {
+          this.guide.lineStyle(1, 0xf39887, 0.7);
+          for (const r of d.config.obstacles)
+            this.guide.strokeRect(r.x, r.y, r.w, r.h);
+          this.guide.fillStyle(0x8ed5c8, 0.9);
+          for (const a of d.config.activities)
+            this.guide.fillCircle(a.point.x, a.point.y, 4);
+          this.guide
+            .lineStyle(1, 0x8ed5c8, 0.7)
+            .lineBetween(
+              model.position.x,
+              model.position.y,
+              placement.x,
+              placement.y,
+            );
         }
         if (_now - this.lastReport > 100) {
           this.lastReport = _now;
           if (alive) {
+            setReplayStatus(
+              this.simulation
+                ? `${this.simulation.label} · ${this.simulation.departure ? "standing up" : this.simulation.settling ? "settling into seat" : this.leaving ? "departure" : "approach / activity"}`
+                : "",
+            );
+            setContact(
+              calibrationRecord(o.entry.room, o.entry.activity, placement),
+            );
             setTime(this.elapsed);
-            setFrame(name);
+            setFrame(
+              frameForPlacement(name, placement, this.elapsed, o.reduced),
+            );
           }
         }
       }
@@ -240,6 +376,82 @@ export default function HeroinePreview() {
               ))}
             </select>
           </label>
+          <details open={params.has("calibration")}>
+            <summary>Interaction calibration</summary>
+            <label className="lab-check">
+              <input
+                type="checkbox"
+                checked={baseline}
+                onChange={(e) => setBaseline(e.target.checked)}
+              />
+              Compare original 2.4 contacts
+            </label>
+            <label className="lab-check">
+              <input
+                type="checkbox"
+                checked={navigation}
+                onChange={(e) => setNavigation(e.target.checked)}
+              />
+              Collision & approach guides
+            </label>
+            {(["x", "y", "scale"] as const).map((k) => (
+              <label key={k}>
+                Contact {k}
+                <input
+                  aria-label={`Contact ${k}`}
+                  type="number"
+                  step={k === "scale" ? 0.05 : 1}
+                  min={k === "scale" ? 0.1 : -500}
+                  max={k === "scale" ? 4 : 500}
+                  value={calibration[k]}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    if (Number.isFinite(v))
+                      setCalibration((c) => ({ ...c, [k]: v }));
+                  }}
+                />
+              </label>
+            ))}
+            <button onClick={() => setCalibration(neutralCalibration)}>
+              Reset calibration offsets
+            </button>
+            <label>
+              Transition phase
+              <select
+                value={phase}
+                onChange={(e) => {
+                  setPhase(e.target.value);
+                  setReplay(false);
+                  setPlaying(false);
+                }}
+              >
+                <option value="activity">Occupied activity</option>
+                <option value="arrive">Approach / sit down</option>
+                <option value="leave">Stand up / leave</option>
+              </select>
+            </label>
+            <label>
+              Transition progress
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={phaseProgress}
+                onChange={(e) => setPhaseProgress(Number(e.target.value))}
+              />
+            </label>
+            <label>
+              Calibration JSON
+              <textarea readOnly rows={6} value={contact} />
+            </label>
+            <p>
+              Offsets affect this preview only. Teal dots are reachable floor
+              approaches; the connecting line is a furniture contact, not a walk
+              through an obstacle. Compare matching room and transparent studio
+              at fixed timeline positions before accepting changes.
+            </p>
+          </details>
           <label>
             Context
             <select
@@ -350,6 +562,23 @@ export default function HeroinePreview() {
           </p>
         </aside>
         <section className="lab-stage" aria-label="Animation preview">
+          <div className="lab-replay">
+            <button
+              onClick={() => {
+                setReplayKey((n) => n + 1);
+                setReplay(true);
+                setZoom(1);
+                setPlaying(true);
+                setNavigation(true);
+              }}
+            >
+              Replay approach → sit → activity → leave
+            </button>
+            <button disabled={!replay} onClick={() => setReplay(false)}>
+              Return to pose calibration
+            </button>
+            <output>{replayStatus}</output>
+          </div>
           <div ref={host} className="lab-canvas" />
           <p>
             {entry.label} ·{" "}

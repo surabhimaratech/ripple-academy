@@ -489,7 +489,7 @@ export default function App() {
             aria-pressed={autonomous}
             onClick={toggleAutonomy}
           >
-            {autonomous ? "Wandering: on" : "Manual only"}
+            {autonomous ? "Scholar: autonomous" : "Manual control"}
           </button>
           <button className="ambient-toggle" onClick={enterAmbient}>
             Ambient view
@@ -539,7 +539,7 @@ export default function App() {
       {location === "university" && tab && (
         <button
           className="entrance-folio-scrim"
-          aria-label="Close the folio"
+          aria-label="Close the journal"
           onClick={closeMenu}
         />
       )}
@@ -715,20 +715,20 @@ export default function App() {
             <div className="folio-binding" />
             <div className="folio-top">
               <div>
-                <span className="eyebrow">THE SCHOLAR’S FOLIO</span>
+                <span className="eyebrow">THE SCHOLAR’S JOURNAL</span>
                 <h2 tabIndex={-1} ref={folioHeading}>
                   {tabs.find((t) => t.id === tab)?.label}
                 </h2>
               </div>
               <button
                 className="close-button"
-                aria-label="Close folio"
+                aria-label="Close journal"
                 onClick={closeMenu}
               >
                 ×
               </button>
             </div>
-            <div className="folio-tabs" aria-label="Folio pages">
+            <div className="folio-tabs" aria-label="Journal pages">
               {tabs.map((t) => (
                 <button
                   key={t.id}
@@ -996,7 +996,7 @@ export default function App() {
                       objects directly, or use the command bar below.
                     </p>
                     <p>
-                      Esc closes the folio. Manual input pauses while menus are
+                      Esc closes the journal. Manual input pauses while menus are
                       open; autonomous activities continue.
                     </p>
                   </section>

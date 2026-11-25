@@ -34,6 +34,7 @@ export interface Activity {
   facing: Facing;
   pose: Pose;
   offsetY?: number;
+  furniture?: string;
   seconds: [number, number];
   weight: number;
   object?: Interaction;
@@ -47,6 +48,8 @@ export interface RoomConfig {
   wanderPoints: Point[];
 }
 interface Snapshot {
+  departingActivity?: Activity;
+  settling: number;
   state: BehaviorState;
   activity?: Activity;
   remaining: number;
@@ -74,7 +77,9 @@ export class ScholarBehavior {
   hasBook = false;
   engaged = 0;
   moving = false;
+  settling = 0;
   departure = 0;
+  departingActivity?: Activity;
   private targetActivity?: Activity;
   private arrival?: Interaction;
   private events: Interaction[] = [];
@@ -142,11 +147,13 @@ export class ScholarBehavior {
       this.manualRemaining = 0;
       this.choose();
     } else if (id && paused) {
+      this.leaveFurniture();
       this.activity = undefined;
       this.path = [];
       this.state = "idle";
       this.remaining = 5;
     } else if (!id) {
+      this.leaveFurniture();
       this.activity = undefined;
       this.path = [];
       this.state = "idle";
@@ -163,6 +170,7 @@ export class ScholarBehavior {
   setAutonomous(enabled: boolean) {
     this.autonomous = enabled;
     if (!enabled && this.manualRemaining === 0) {
+      this.leaveFurniture();
       this.path = [];
       this.activity = undefined;
       this.targetActivity = undefined;
@@ -181,12 +189,19 @@ export class ScholarBehavior {
     this.thoughtsEnabled = enabled;
     if (!enabled) this.thought = null;
   }
+  private leaveFurniture() {
+    if (this.activity?.furniture) {
+      this.departingActivity = this.activity;
+      this.departure = Math.max(0.05, 1.2 - this.settling);
+      this.settling = 0;
+    } else if (this.activity?.offsetY) this.departure = 0.8;
+  }
   private control() {
     this.afterSession = undefined;
     this.manualRemaining = MANUAL_SECONDS;
     this.resume = undefined;
     this.thought = null;
-    if (this.activity?.offsetY) this.departure = 0.65;
+    this.leaveFurniture();
     this.activity = undefined;
     this.targetActivity = undefined;
     this.arrival = undefined;
@@ -197,6 +212,7 @@ export class ScholarBehavior {
     this.control();
     if (this.departure > 0) {
       this.departure = Math.max(0, this.departure - dt);
+      if (!this.departure) this.departingActivity = undefined;
       this.moving = false;
       return;
     }
@@ -234,6 +250,8 @@ export class ScholarBehavior {
         arrival: this.arrival,
         manualRemaining: this.manualRemaining,
         departure: this.departure,
+        departingActivity: this.departingActivity,
+        settling: this.settling,
         engaged: this.engaged,
         targetActivity: this.targetActivity,
       };
@@ -269,18 +287,22 @@ export class ScholarBehavior {
         const route = this.nav.path(this.position, next.point);
         if (route) {
           if (
-            this.activity?.id === next.id &&
+            (this.activity?.id === next.id ||
+              (!!next.furniture &&
+                this.activity?.furniture === next.furniture)) &&
             Math.hypot(
               this.position.x - next.point.x,
               this.position.y - next.point.y,
             ) < 0.5
           ) {
+            this.activity = next;
+            this.state = next.state;
             this.remaining = this.range(...next.seconds) + 0.9;
             this.engaged = 0;
             this.moving = false;
             return;
           }
-          if (this.activity?.offsetY) this.departure = 0.8;
+          this.leaveFurniture();
           this.activity = undefined;
           this.targetActivity = next;
           this.path = route;
@@ -323,7 +345,7 @@ export class ScholarBehavior {
         ];
       const path = this.nav.path(this.position, goal);
       if (path) {
-        if (this.activity?.offsetY) this.departure = 0.8;
+        this.leaveFurniture();
         this.activity = undefined;
         this.path = path;
         this.state = "wandering";
@@ -352,18 +374,21 @@ export class ScholarBehavior {
       return;
     }
     if (
-      this.activity?.id === next.id &&
+      (this.activity?.id === next.id ||
+        (!!next.furniture && this.activity?.furniture === next.furniture)) &&
       Math.hypot(
         this.position.x - next.point.x,
         this.position.y - next.point.y,
       ) < 0.5
     ) {
+      this.activity = next;
+      this.state = next.state;
       this.remaining = this.range(...next.seconds) + 0.9;
       this.engaged = 0;
       this.moving = false;
       return;
     }
-    if (this.activity?.offsetY) this.departure = 0.8;
+    this.leaveFurniture();
     this.activity = undefined;
     this.targetActivity = next;
     this.path = path;
@@ -387,6 +412,11 @@ export class ScholarBehavior {
       return;
     }
     this.manualRemaining = Math.max(0, this.manualRemaining - dt);
+    if (this.departure > 0) {
+      this.departure = Math.max(0, this.departure - dt);
+      if (!this.departure) this.departingActivity = undefined;
+      return;
+    }
     if (this.sessionPaused && this.manualRemaining <= 0) {
       this.moving = false;
       return;
@@ -396,10 +426,6 @@ export class ScholarBehavior {
       if (this.thought.remaining <= 0) this.thought = null;
     }
     this.thoughtIn -= dt;
-    if (this.departure > 0) {
-      this.departure = Math.max(0, this.departure - dt);
-      return;
-    }
     if (this.path.length) {
       const target = this.path[0];
       const distance = Math.hypot(
@@ -428,9 +454,11 @@ export class ScholarBehavior {
         this.activity = this.targetActivity;
         this.targetActivity = undefined;
         this.state = this.activity.state;
+        this.moving = false;
         this.facing = this.activity.facing;
         this.remaining = this.range(...this.activity.seconds) + 0.9;
         this.engaged = 0;
+        this.settling = this.activity.furniture ? 1.2 : 0;
         this.recent = [this.activity.id, ...this.recent].slice(0, 3);
         if (this.activity.pose === "browse") this.hasBook = true;
         if (this.arrival) {
@@ -448,6 +476,7 @@ export class ScholarBehavior {
       if (this.autonomous && this.manualRemaining <= 0) this.choose();
       return;
     }
+    this.settling = Math.max(0, this.settling - dt);
     this.engaged += dt;
     this.remaining -= dt;
     if (

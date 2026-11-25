@@ -3,7 +3,8 @@ import { workSample, telescopeSample, chartFrame } from "./programs";
 import { animationCatalog, previewFrame } from "./catalog";
 import { frameNames } from "./assets";
 import { registeredFrames } from "./atlas";
-import { placementFor, visibleRegions, furniture } from "./presentation";
+import { placementFor, visibleRegions } from "./presentation";
+import { studyFurniture } from "../game/furniture";
 import { roomDefinitions } from "../game/rooms";
 import { ScholarBehavior } from "../game/behavior";
 it("keeps work microphases unhurried, deterministic, reversible and still in reduced motion", () => {
@@ -82,8 +83,11 @@ it("uses fixed desk/chair contact anchors and excludes nonexistent Study furnitu
   for (let i = 0; i < 500; i++) b.step(1 / 30);
   const before = { ...b.position },
     place = placementFor(d.id, b);
-  expect(place).toMatchObject({ x: 648, y: 426, key: "personal-study:desk" });
-  expect(place.occluders).toEqual([furniture["personal-study"].desk]);
+  expect(place).toMatchObject({
+    ...studyFurniture.desk.contact,
+    key: "study-desk",
+  });
+  expect(place.foreground).toEqual(studyFurniture.desk.foreground);
   expect(b.position).toEqual(before);
   expect(d.config.activities.some((a) => a.pose === "sleep")).toBe(false);
   expect(animationCatalog.find((a) => a.id === "sleep")?.studioOnly).toBe(true);

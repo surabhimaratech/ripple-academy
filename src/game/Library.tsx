@@ -276,7 +276,7 @@ class GrandLibrary extends Phaser.Scene {
         .setText(thought.text)
         .setPosition(
           Math.min(1125, Math.max(155, this.heroine.x)),
-          this.heroine.y - 127,
+          this.view.headY,
         );
     const engaged =
       this.behavior.activity &&
@@ -305,7 +305,7 @@ class GrandLibrary extends Phaser.Scene {
     this.behavior.celebrate();
     const { xp, gold, levelUp } = event;
     const x = this.heroine.x,
-      y = this.heroine.y - 125;
+      y = this.view.headY;
     const text = this.add
       .text(x, y, `+${xp} XP  ·  +${gold} gold`, {
         fontFamily: "monospace",
@@ -610,7 +610,7 @@ export function Library({
             <strong>{status.label}</strong>
             <small>
               {!autonomous
-                ? "Manual-only mode"
+                ? "Manual control"
                 : status.manual
                   ? `Following your lead · autonomy in ${status.manual}s`
                   : "At her own pace"}
@@ -623,7 +623,7 @@ export function Library({
           <span className="keycap">W A S D</span>
           <span>
             {blocked
-              ? "The scholar continues her day while you use the folio."
+              ? "Your scholar continues her activities while the journal is open."
               : prompt}
           </span>
         </div>

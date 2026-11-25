@@ -1,3 +1,4 @@
+import { studyFurniture, windowVantage } from "./furniture";
 import { paintStudy } from "./studyArt";
 import type Phaser from "phaser";
 import { paintLibrary } from "./art";
@@ -22,9 +23,8 @@ const study: RoomConfig = {
   afterSessionActivity: "study-stretch",
   bounds: { left: 35, right: 1235, top: 520, bottom: 695 },
   obstacles: [
-    { x: 390, y: 350, w: 520, h: 198 },
-    { x: 574, y: 345, w: 172, h: 235 },
-    { x: 0, y: 350, w: 270, h: 286 },
+    ...studyFurniture.desk.solids,
+    ...studyFurniture.armchair.solids,
     { x: 918, y: 350, w: 362, h: 247 },
     { x: 0, y: 640, w: 175, h: 80 },
     { x: 1170, y: 640, w: 110, h: 80 },
@@ -37,9 +37,10 @@ const study: RoomConfig = {
   activities: [
     make({
       id: "code",
+      furniture: studyFurniture.desk.id,
       state: "writing",
       label: "Working quietly at her laptop",
-      point: { x: 656, y: 605 },
+      point: studyFurniture.desk.approach,
       facing: "up",
       pose: "code",
       offsetY: -42,
@@ -53,9 +54,10 @@ const study: RoomConfig = {
     }),
     make({
       id: "study-write",
+      furniture: studyFurniture.desk.id,
       state: "writing",
       label: "Writing in her notebook",
-      point: { x: 790, y: 580 },
+      point: studyFurniture.desk.approach,
       facing: "up",
       pose: "write",
       offsetY: -42,
@@ -77,9 +79,10 @@ const study: RoomConfig = {
     }),
     make({
       id: "study-read",
+      furniture: studyFurniture.armchair.id,
       state: "reading",
       label: "Reading in her favorite chair",
-      point: { x: 300, y: 655 },
+      point: studyFurniture.armchair.approach,
       facing: "down",
       pose: "seated-read",
       offsetY: -50,
@@ -91,8 +94,8 @@ const study: RoomConfig = {
     make({
       id: "study-window",
       state: "observing",
-      label: "Watching the world beyond her window",
-      point: { x: 950, y: 625 },
+      label: "Watching the sunset through the study window",
+      point: windowVantage.point,
       facing: "up",
       pose: "observe",
       seconds: [22, 35],
@@ -114,9 +117,10 @@ const study: RoomConfig = {
     }),
     make({
       id: "study-tea",
+      furniture: studyFurniture.armchair.id,
       state: "sitting",
       label: "Sipping tea in her armchair",
-      point: { x: 300, y: 655 },
+      point: studyFurniture.armchair.approach,
       facing: "down",
       pose: "tea",
       offsetY: -50,
@@ -137,9 +141,11 @@ const study: RoomConfig = {
     }),
     make({
       id: "study-rest",
-      state: "idle",
-      label: "Taking a thoughtful little break",
-      point: { x: 812, y: 650 },
+      furniture: studyFurniture.armchair.id,
+      state: "sitting",
+      label: "Resting comfortably in her armchair",
+      point: studyFurniture.armchair.approach,
+      offsetY: -50,
       facing: "down",
       pose: "rest",
       seconds: [15, 26],

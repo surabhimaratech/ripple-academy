@@ -112,3 +112,44 @@ html:has(.animation-lab) {
   color: #b6c7c5;
   margin-top: 15px;
 }
+.lab-layout details {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #6e6559;
+}
+.lab-layout summary {
+  cursor: pointer;
+  color: #e9cc8e;
+  margin-bottom: 12px;
+}
+.lab-layout input[type="number"],
+.lab-layout textarea {
+  max-width: 100%;
+  background: #182633;
+  color: #e4dabf;
+  border: 1px solid #6e6559;
+  padding: 7px;
+}
+.lab-layout textarea {
+  font: 11px monospace;
+  resize: vertical;
+}
+.lab-replay {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+.lab-replay button {
+  background: #35414d;
+  color: #ebd6a5;
+  border: 1px solid #a48b60;
+  padding: 8px;
+  font: 13px Georgia;
+}
+.lab-replay output {
+  font: 12px monospace;
+  color: #8ed5c8;
+}

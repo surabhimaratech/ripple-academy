@@ -14,7 +14,7 @@ const idle: HeroinePose = {
 describe("canonical heroine artwork pipeline", () => {
   it("validates unique frame names, clip references and common foot anchors", () => {
     expect(validateHeroineManifest()).toBe(true);
-    expect(frameNames.size).toBe(42);
+    expect(frameNames.size).toBe(62);
     expect(heroine.canvas).toMatchObject({
       width: 96,
       height: 144,

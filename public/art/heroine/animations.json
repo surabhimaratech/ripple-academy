@@ -333,51 +333,260 @@
           "group": "window-thought"
         }
       ]
+    },
+    {
+      "id": "study-armchair",
+      "src": "/art/heroine/study-armchair-v2.png",
+      "columns": 4,
+      "rows": 2,
+      "frames": [
+        {
+          "name": "study-read",
+          "row": 0,
+          "column": 0,
+          "height": 116,
+          "group": "study-armchair"
+        },
+        {
+          "name": "study-page",
+          "row": 0,
+          "column": 1,
+          "height": 116,
+          "group": "study-armchair"
+        },
+        {
+          "name": "study-look-up",
+          "row": 0,
+          "column": 2,
+          "height": 116,
+          "group": "study-armchair"
+        },
+        {
+          "name": "study-rest",
+          "row": 0,
+          "column": 3,
+          "height": 116,
+          "group": "study-armchair"
+        },
+        {
+          "name": "study-tea",
+          "row": 1,
+          "column": 0,
+          "height": 116,
+          "group": "study-armchair"
+        },
+        {
+          "name": "study-sip",
+          "row": 1,
+          "column": 1,
+          "height": 116,
+          "group": "study-armchair"
+        },
+        {
+          "name": "study-rest-eyes",
+          "row": 1,
+          "column": 2,
+          "height": 116,
+          "group": "study-armchair"
+        },
+        {
+          "name": "study-read-blink",
+          "row": 1,
+          "column": 3,
+          "height": 116,
+          "group": "study-armchair"
+        }
+      ]
+    },
+    {
+      "id": "study-desk",
+      "src": "/art/heroine/study-desk-v1.png",
+      "columns": 4,
+      "rows": 2,
+      "frames": [
+        {
+          "name": "study-type-a",
+          "row": 0,
+          "column": 0,
+          "height": 126,
+          "group": "study-desk"
+        },
+        {
+          "name": "study-type-b",
+          "row": 0,
+          "column": 1,
+          "height": 126,
+          "group": "study-desk"
+        },
+        {
+          "name": "study-think",
+          "row": 0,
+          "column": 2,
+          "height": 126,
+          "group": "study-desk"
+        },
+        {
+          "name": "study-consult-a",
+          "row": 0,
+          "column": 3,
+          "height": 126,
+          "group": "study-desk"
+        },
+        {
+          "name": "study-consult-b",
+          "row": 1,
+          "column": 0,
+          "height": 126,
+          "group": "study-desk"
+        },
+        {
+          "name": "study-write-a",
+          "row": 1,
+          "column": 1,
+          "height": 126,
+          "group": "study-desk"
+        },
+        {
+          "name": "study-write-b",
+          "row": 1,
+          "column": 2,
+          "height": 126,
+          "group": "study-desk"
+        },
+        {
+          "name": "study-desk-rise",
+          "row": 1,
+          "column": 3,
+          "height": 126,
+          "group": "study-desk"
+        }
+      ]
+    },
+    {
+      "id": "study-transitions",
+      "src": "/art/heroine/study-transitions-v1.png",
+      "columns": 2,
+      "rows": 2,
+      "frames": [
+        {
+          "name": "study-stand-front",
+          "row": 0,
+          "column": 0,
+          "height": 112,
+          "group": "study-stand-front"
+        },
+        {
+          "name": "study-bend-front",
+          "row": 0,
+          "column": 1,
+          "height": 112,
+          "group": "study-stand-front"
+        },
+        {
+          "name": "study-stand-rear",
+          "row": 1,
+          "column": 0,
+          "height": 112,
+          "group": "study-stand-rear"
+        },
+        {
+          "name": "study-bend-rear",
+          "row": 1,
+          "column": 1,
+          "height": 112,
+          "group": "study-stand-rear"
+        }
+      ]
     }
   ],
   "clips": {
     "walk-down": {
-      "frames": ["idle-down", "walk-a-down", "idle-down", "walk-b-down"],
+      "frames": [
+        "idle-down",
+        "walk-a-down",
+        "idle-down",
+        "walk-b-down"
+      ],
       "frameMs": 170
     },
     "walk-right": {
-      "frames": ["idle-right", "walk-a-right", "idle-right", "walk-b-right"],
+      "frames": [
+        "idle-right",
+        "walk-a-right",
+        "idle-right",
+        "walk-b-right"
+      ],
       "frameMs": 170
     },
     "walk-up": {
-      "frames": ["idle-up", "walk-a-up", "idle-up", "walk-b-up"],
+      "frames": [
+        "idle-up",
+        "walk-a-up",
+        "idle-up",
+        "walk-b-up"
+      ],
       "frameMs": 170
     },
     "walk-left": {
-      "frames": ["idle-left", "walk-a-left", "idle-left", "walk-b-left"],
+      "frames": [
+        "idle-left",
+        "walk-a-left",
+        "idle-left",
+        "walk-b-left"
+      ],
       "frameMs": 170
     },
     "typing": {
-      "frames": ["type-a", "type-b"],
+      "frames": [
+        "type-a",
+        "type-b"
+      ],
       "frameMs": 650
     },
     "writing": {
-      "frames": ["write-a", "write-b"],
+      "frames": [
+        "write-a",
+        "write-b"
+      ],
       "frameMs": 900
     },
     "telescope": {
-      "frames": ["telescope-a", "telescope-b"],
+      "frames": [
+        "telescope-a",
+        "telescope-b"
+      ],
       "frameMs": 2200
     },
     "consulting": {
-      "frames": ["consult-a", "consult-b"],
+      "frames": [
+        "consult-a",
+        "consult-b"
+      ],
       "frameMs": 1600
     },
     "tea": {
-      "frames": ["tea-hold", "tea-sip", "tea-sip", "tea-hold"],
+      "frames": [
+        "tea-hold",
+        "tea-sip",
+        "tea-sip",
+        "tea-hold"
+      ],
       "frameMs": 2200
     },
     "stretch": {
-      "frames": ["stretch-a", "stretch-b", "stretch-b", "stretch-a"],
+      "frames": [
+        "stretch-a",
+        "stretch-b",
+        "stretch-b",
+        "stretch-a"
+      ],
       "frameMs": 1600
     },
     "sleeping": {
-      "frames": ["sleep-a", "sleep-b"],
+      "frames": [
+        "sleep-a",
+        "sleep-b"
+      ],
       "frameMs": 3600
     }
   }

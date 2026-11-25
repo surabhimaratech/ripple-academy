@@ -20,7 +20,7 @@ export type Editor =
   | { kind: "reward"; value?: Reward }
   | { kind: "discovery"; value?: Discovery };
 export const tabs: { id: Tab; label: string; icon: string }[] = [
-  { id: "focus", label: "Study focus", icon: "◴" },
+  { id: "focus", label: "Focus timer", icon: "◴" },
   { id: "sessions", label: "Activities", icon: "✦" },
   { id: "curriculum", label: "Curriculum", icon: "▥" },
   { id: "quests", label: "Quest journal", icon: "▤" },

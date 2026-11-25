@@ -174,4 +174,12 @@ The quest journal now supports practical objectives, descriptions, checklists, p
 
 Complete quests explicitly, with or without a timer. A quest may span several intervals. Completion and undo retain their existing exactly-once reward snapshots. JSON save export/import includes the richer quests and focus timer, using optional fields in the existing version-1 IndexedDB save; there is no destructive migration or database rename.
 
-Artwork limits: the supplied illustration is a flattened image. Desk/armchair occlusion uses calibrated character-only rectangular masks, and the live clock covers its original face. Existing approved heroine sprites are reused; no new heroine artwork was generated. No bed, telescope or large carpet was added to the Study. The sleeping asset remains available in the development animation studio only. Library and Observatory artwork are unchanged.
+Artwork limits: the supplied illustration remains a flattened image and the live clock covers its original face. Milestone 2.4.1 adds separate furniture-compatible heroine sheets and calibrated polygon masks; the original approved sprites are preserved. No bed, telescope or large carpet was added to the Study. The sleeping asset remains available in the development animation studio only. Library and Observatory artwork are unchanged.
+
+## Study interaction calibration — Milestone 2.4.1
+
+The Study now has furniture-compatible desk and armchair poses, satchel-free seated activities, shared furniture contacts, polygon foreground masks, contact shadows and drawn sit/stand transitions. Reading, resting and tea retain the same occupied-chair position; desk work keeps a consistent chair contact. Reflection faces the large window from accessible floor. The approved room and original heroine PNGs remain intact.
+
+Development preview: `/?preview=heroine&animation=study-reading`. Open **Interaction calibration** to adjust contact X/Y/scale, inspect collision/approach guides, read calibration JSON and freeze entry/exit phases. **Replay approach → sit → activity → leave** runs the real behavior/navigation code without opening saved progress. **Compare original 2.4 contacts** provides a matched before view. Useful query parameters: `baseline=1`, `still=1`, `t=11.5`, `zoom=1|2|3`, `guides=0`, `calibration=1`, `renderer=canvas`. The preview is development-only.
+
+See [the milestone report](docs/MILESTONE-2.4.1.md) for selected asset dimensions, original-pose diagnosis, replacement specifications and furniture relocation dependencies. Furniture was not moved; no Happy Café work was included. Normal controls, saved progress and all XP/gold rules are preserved.

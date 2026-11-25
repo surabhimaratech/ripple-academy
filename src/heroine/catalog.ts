@@ -91,6 +91,22 @@ export const animationCatalog: AnimationEntry[] = [
     duration: 24,
   }),
   entry({
+    id: "study-reading",
+    label: "Study armchair · reading & page turn",
+    room: "personal-study",
+    activity: "study-read",
+    pose: "seated-read",
+    duration: 16,
+  }),
+  entry({
+    id: "study-rest",
+    label: "Study armchair · resting",
+    room: "personal-study",
+    activity: "study-read",
+    pose: "sit",
+    duration: 8,
+  }),
+  entry({
     id: "seated-reading",
     label: "Seated reading & page turn",
     room: "grand-library",
