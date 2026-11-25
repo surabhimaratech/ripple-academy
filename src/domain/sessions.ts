@@ -2,7 +2,7 @@ import type { State } from "./model";
 export type Interior = "grand-library" | "personal-study" | "observatory";
 export type Location = Interior | "university";
 export const roomNames: Record<Location, string> = {
-  university: "University grounds",
+  university: "Ripple Academy",
   "grand-library": "Grand Library",
   "personal-study": "Personal Study",
   observatory: "Observatory",

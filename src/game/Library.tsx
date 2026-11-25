@@ -6,7 +6,7 @@ import {
   nearestInteraction,
   type RoomDefinition,
 } from "./rooms";
-import { UniversityExterior, transition } from "./exterior";
+import { transition } from "./exterior";
 import type { Location, ActivitySession } from "../domain/sessions";
 import { ScholarBehavior } from "./behavior";
 import { ScholarView } from "./scholarView";
@@ -394,10 +394,9 @@ export function Library({
       pixelArt: true,
       roundPixels: true,
       backgroundColor: "#21202b",
-      scene: [
-        UniversityExterior,
-        ...Object.values(roomDefinitions).map((def) => new GrandLibrary(def)),
-      ],
+      scene: Object.values(roomDefinitions)
+        .sort((a, b) => (a.id === location ? -1 : b.id === location ? 1 : 0))
+        .map((def) => new GrandLibrary(def)),
       scale: {
         mode: Phaser.Scale.ENVELOP,
         autoCenter: Phaser.Scale.CENTER_BOTH,

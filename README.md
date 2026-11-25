@@ -1,6 +1,8 @@
-# Magical University — working title
+# Ripple Academy
 
-A cozy, single-player, local-only personal development game. The university entrance now leads to the Grand Library, Personal Study and Observatory. A living scholar wanders, reads, writes and observes at her own pace, and accompanies activities you explicitly choose in the real world.
+*Through curiosity, to the stars.*
+
+A cozy, single-player, local-only personal development game. A place to become yourself. The university entrance now leads to the Grand Library, Personal Study and Observatory. A living scholar wanders, reads, writes and observes at her own pace, and accompanies activities you explicitly choose in the real world.
 
 ## Run locally
 
@@ -28,13 +30,19 @@ The production build is written to `dist/`. Type checking runs as part of the bu
 
 ## Arrive at your university
 
-The opening scene is original pixel-art architecture: a many-gabled library, intimate study wing, copper-domed observatory, connecting arcade, courtyard, planted pathways and lanterns. Its six independently rendered layers are sky/stars, mountains, clouds/mist, university buildings, courtyard/trees/lanterns and foreground foliage/fireflies.
+The entrance is a cinematic, normally scrolling journey through three stages:
 
-Moving the pointer produces gently interpolated parallax. Distant layers move less; idle drift takes over after six quiet seconds. Star twinkling, cloud and mist movement, warm window flicker, lanterns, occasional owl silhouettes, fireflies and chimney smoke animate independently. Layers are overscanned to avoid exposed edges.
+1. **Arrival** — one interconnected Gothic academy above a forest lake, with the celestial dolphin crest, motto and **Enter the Academy** action. No productivity panels obscure the initial view.
+2. **University grounds** — a detailed courtyard, welcome, academic rank, XP/gold, quests, curriculum and activity access.
+3. **Academic wings** — previews captured from the actual Grand Library, Personal Study and Observatory painters. Each opens its existing interactive room.
 
-Hover an accessible building to illuminate its facade and show its name; click to enter with a short fade. The **University destinations** navigation provides an HTML and keyboard alternative. University grounds, Library, Study and Observatory are always available without unlocking or spending currency.
+Use the header’s **Resume** shortcut to bypass the introduction. An active or paused activity takes priority; otherwise it returns to the last visited room. All destinations also have keyboard-accessible buttons.
 
-**Save & settings** offers automatic local time or Morning, Afternoon, Twilight and Nighttime palettes. Entrance parallax can be Off, Very gentle, Gentle or Full. Reduced motion disables parallax, idle drift and decorative exterior animation. A small crest, academic title, XP/gold HUD, current courses and prominent activity/quest/curriculum access supply identity without replacing the environment with a dashboard.
+Seven separate canvas layers move at different depths as the document scrolls, with smooth interpolation, lake reflections, drifting mist, window warmth, sparse fireflies and an occasional owl. Scroll position remains controlled by the browser; there are no wheel handlers or pinned scrolling scripts.
+
+**Save & settings** offers Off, Very gentle, Gentle and Full scroll parallax. Reduced motion freezes decorative movement and disables smooth anchor scrolling. The entrance pauses canvas animation when hidden or out of view; room previews render once and destroy their temporary engine. Morning/afternoon/twilight/night settings apply subtle color grading to the moonlit artwork, rather than switching to fully repainted daylight scenes.
+
+See the [entrance architecture and artwork replacement guide](docs/ENTRANCE-ARTWORK.md).
 
 ## Your living scholar
 
@@ -120,14 +128,16 @@ Saves belong to this browser profile and origin. Clearing storage removes the ac
 - `src/game/navigation.ts`, `movement.ts`: cached grid, route finding, collision clearance and manual movement primitives.
 - `src/game/room.ts`, `rooms.ts`: room-specific destinations, interaction bounds, solids, spawn points and session behavior mappings.
 - `src/game/art.ts`, `interiorArt.ts`, `scholar.ts`, `scholarView.ts`: original art, directional/animated activity poses and depth-sorted rendering.
-- `src/game/exterior.ts`, `atmosphere.ts`: six-layer exterior, interpolation, atmosphere, destinations and scene fades.
+- `src/entrance/`: React entrance stages, seven-layer Canvas2D panorama, asset manifest, scroll math and lazy room previews.
+- `src/game/roomPreview.ts`: one-shot snapshots of the actual room painters; no persistence access.
+- `src/game/atmosphere.ts`: local time palette helpers. `exterior.ts` retains the earlier exterior renderer for reference and supplies the interior fade helper; the earlier exterior is no longer mounted.
 - `src/game/Library.tsx`: React/Phaser bridge and visibility/resize lifecycle for the scene registry.
 - `src/ui/`: accessible folio/editor/session/curriculum controls, preferences and optional sound.
 
-Plans: [original architecture](docs/PLAN.md), [visual polish](docs/MILESTONE-1.5.md), [living scholar](docs/MILESTONE-1.6.md), [university milestone](docs/MILESTONE-2.md). See [current verification](docs/VERIFICATION-MILESTONE-2.md).
+Plans: [original architecture](docs/PLAN.md), [visual polish](docs/MILESTONE-1.5.md), [living scholar](docs/MILESTONE-1.6.md), [university milestone](docs/MILESTONE-2.md). See the [Ripple entrance plan](docs/MILESTONE-2.1.md) and [current verification](docs/VERIFICATION-MILESTONE-2.1.md).
 
 ## Art and attribution
 
-All library, Study, Observatory, exterior, scholar, crest, portrait and keepsake artwork is original, authored in TypeScript, SVG and CSS for this project. The architecture, identity and silhouettes are original; no franchise assets, third-party sprites, fonts, photographs or music are used. Reward tones are synthesized locally with Web Audio. Dependencies retain their own licenses in `node_modules`.
+Library, Study, Observatory, scholar, crest, portrait and keepsake artwork is original, authored in TypeScript, SVG and CSS for this project. The entrance adds three original raster assets generated with OpenAI ImageGen: academy architecture, courtyard and foreground foliage. Supporting sky, mountain, mist, lake and forest layers are original SVG. See [asset provenance and final prompts](docs/ARTWORK-PROMPTS.md). The architecture, identity and silhouettes are original; no franchise assets, third-party sprites, fonts, photographs or music are used. Reward tones are synthesized locally with Web Audio. Dependencies retain their own licenses in `node_modules`.
 
-The scope remains three intimate rooms and a university entrance. There is no combat, survival system, character needs, authentication, cloud service, mobile layout, external application monitoring, dragon storyline or permanent application name.
+The scope remains three intimate rooms and a university entrance. There is no combat, survival system, character needs, authentication, cloud service, mobile layout, external application monitoring or dragon storyline.

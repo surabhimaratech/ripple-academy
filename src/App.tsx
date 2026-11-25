@@ -13,8 +13,20 @@ import {
   useSessionClock,
   timeLabel,
 } from "./ui/SessionPages";
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { Library, type Celebration } from "./game/Library";
+import {
+  useEffect,
+  useRef,
+  useState,
+  lazy,
+  Suspense,
+  type ChangeEvent,
+} from "react";
+import type { Celebration } from "./game/Library";
+import { Entrance } from "./entrance/Entrance";
+import { resumeDestination } from "./entrance/scroll";
+const Library = lazy(() =>
+  import("./game/Library").then((module) => ({ default: module.Library })),
+);
 import { progression, type State, type Action } from "./domain/model";
 import { parseSave, serializeSave, MAX_SAVE_BYTES } from "./domain/save";
 import { Repository } from "./persistence/repository";
@@ -58,11 +70,63 @@ export default function App() {
   const [clockEpoch, setClockEpoch] = useState(0);
   const clock = useSessionClock(currentSession, clockEpoch);
   function visit(next: Location) {
+    if (next !== "university") remember("ripple-last-room", next);
     setLocation(next);
     setTab(null);
     setPendingImport(null);
     setAmbient(false);
   }
+  const resumeRoom = resumeDestination(
+    state,
+    preference("ripple-last-room", ""),
+  );
+  useEffect(() => {
+    document.title =
+      location === "university"
+        ? "Ripple Academy"
+        : "%s · Ripple Academy".replace("%s", roomNames[location]);
+    window.scrollTo(0, 0);
+  }, [location]);
+  useEffect(() => {
+    if (location !== "university" || !tab) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const trap = (e: KeyboardEvent) => {
+      if (e.key !== "Tab" || document.querySelector("dialog[open]")) return;
+      const elements = Array.from(
+        document.querySelectorAll<HTMLElement>(
+          ".folio button, .folio input, .folio select, .folio textarea, .folio a[href], .folio summary, .folio [tabindex]",
+        ),
+      ).filter(
+        (element) =>
+          !element.matches(":disabled") &&
+          element.tabIndex >= 0 &&
+          element.getClientRects().length > 0,
+      );
+      const first = elements[0],
+        last = elements[elements.length - 1];
+      if (
+        e.shiftKey &&
+        (document.activeElement === first ||
+          !elements.includes(document.activeElement as HTMLElement))
+      ) {
+        e.preventDefault();
+        last?.focus();
+      } else if (
+        !e.shiftKey &&
+        (document.activeElement === last ||
+          !elements.includes(document.activeElement as HTMLElement))
+      ) {
+        e.preventDefault();
+        first?.focus();
+      }
+    };
+    document.addEventListener("keydown", trap);
+    return () => {
+      document.body.style.overflow = previous;
+      document.removeEventListener("keydown", trap);
+    };
+  }, [location, tab]);
   function changeDay(next: string) {
     setDay(next);
     remember("university-day", next);
@@ -164,14 +228,14 @@ export default function App() {
   }, [levelNotice]);
   useEffect(() => {
     if (tab) {
-      folioHeading.current?.focus();
+      folioHeading.current?.focus({ preventScroll: true });
     } else if (menuOpener.current) {
-      menuOpener.current.focus();
+      menuOpener.current.focus({ preventScroll: true });
     }
   }, [tab]);
   function open(next: Tab) {
     setAmbient(false);
-    menuOpener.current = document.activeElement as HTMLElement;
+    if (!tab) menuOpener.current = document.activeElement as HTMLElement;
     setTab(next);
     setError("");
   }
@@ -284,7 +348,7 @@ export default function App() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `magical-university-save-${new Date().toISOString().slice(0, 10)}.json`;
+      link.download = `ripple-academy-save-${new Date().toISOString().slice(0, 10)}.json`;
       link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       setMessage("Your save has been exported. Keep it somewhere safe.");
@@ -312,26 +376,27 @@ export default function App() {
 
   return (
     <div
-      className={`app ${motion.reduced ? "reduced-motion" : ""} ${ambient ? "ambient-view" : ""}`}
+      className={`app ${location === "university" ? "cinematic-app" : ""} ${motion.reduced ? "reduced-motion" : ""} ${ambient ? "ambient-view" : ""}`}
     >
-      <a className="skip-link" href="#game-menu">
-        Skip to game menus
+      <a
+        className="skip-link"
+        href={location === "university" ? "#academic-wings" : "#game-menu"}
+      >
+        Skip to academy navigation
       </a>
       <header className="game-header university-header">
         <div className="university">
           <span className="crest" aria-hidden="true">
-            <img src="/university-crest.svg" alt="" />
+            <img src="/ripple-mark.svg" alt="" />
           </span>
           <span>
-            MAGICAL UNIVERSITY<small>working title · your own pace</small>
+            RIPPLE ACADEMY<small>Through curiosity, to the stars.</small>
           </span>
         </div>
         <div className="location-title">
           <span>☾</span>
           <h1>
-            {location === "university"
-              ? "Your university"
-              : roomNames[location]}
+            {location === "university" ? "Ripple Academy" : roomNames[location]}
           </h1>
           <span>☾</span>
         </div>
@@ -377,20 +442,51 @@ export default function App() {
           ))}
         </nav>
       </header>
-      <main className="game-stage">
-        <Library
-          celebration={celebration}
-          blocked={!!tab || !!editor || finishing}
+      {location === "university" && (
+        <Entrance
+          state={state}
           reduced={motion.reduced}
-          autonomous={autonomous}
-          thoughts={thoughts}
-          onInteract={interact}
-          location={location}
-          session={currentSession}
-          parallax={parallax}
+          intensity={parallax}
+          resume={resumeRoom}
+          visit={visit}
+          open={open}
           day={day}
-          onNavigate={visit}
         />
+      )}
+      {location === "university" && tab && (
+        <button
+          className="entrance-folio-scrim"
+          aria-label="Close the folio"
+          onClick={closeMenu}
+        />
+      )}
+      <div
+        className="game-stage"
+        role={location === "university" ? undefined : "main"}
+      >
+        {location !== "university" && (
+          <Suspense
+            fallback={
+              <div className="room-loading" role="status">
+                Lighting the candles…
+              </div>
+            }
+          >
+            <Library
+              celebration={celebration}
+              blocked={!!tab || !!editor || finishing}
+              reduced={motion.reduced}
+              autonomous={autonomous}
+              thoughts={thoughts}
+              onInteract={interact}
+              location={location}
+              session={currentSession}
+              parallax={parallax}
+              day={day}
+              onNavigate={visit}
+            />
+          </Suspense>
+        )}
         <section
           className={`rpg-hud ${celebration ? "has-earned" : ""}`}
           aria-label="Scholar progression"
@@ -428,51 +524,6 @@ export default function App() {
           </div>
         </section>
 
-        {location === "university" && !tab && !ambient && (
-          <section
-            className="university-welcome"
-            aria-label="Welcome to your university"
-          >
-            <span className="eyebrow">A UNIVERSITY OF YOUR OWN</span>
-            <h2>
-              Welcome home,
-              <br />
-              scholar.
-            </h2>
-            <p>A little curiosity. A world that’s yours to discover.</p>
-            <button className="primary" onClick={() => open("sessions")}>
-              Begin a real-world activity
-            </button>
-            <div className="welcome-links">
-              <button className="text-button" onClick={() => open("quests")}>
-                {state?.quests.filter((q) => !q.completed).length ?? 0}{" "}
-                {state?.quests.filter((q) => !q.completed).length === 1
-                  ? "quest"
-                  : "quests"}{" "}
-                in your journal
-              </button>
-              <button
-                className="text-button"
-                onClick={() => open("curriculum")}
-              >
-                Your personal curriculum
-              </button>
-            </div>
-            {!!state?.courses?.filter((c) => c.active).length && (
-              <div className="current-courses">
-                <span className="eyebrow">CURRENT CURIOSITIES</span>
-                {state.courses
-                  .filter((c) => c.active)
-                  .slice(0, 2)
-                  .map((c) => (
-                    <button key={c.id} onClick={() => open("curriculum")}>
-                      {c.title}
-                    </button>
-                  ))}
-              </div>
-            )}
-          </section>
-        )}
         {currentSession && (
           <section
             className="session-indicator"
@@ -548,6 +599,8 @@ export default function App() {
             id="folio"
             className="folio"
             aria-label={tabs.find((t) => t.id === tab)?.label}
+            role={location === "university" ? "dialog" : undefined}
+            aria-modal={location === "university" ? true : undefined}
           >
             <div className="folio-binding" />
             <div className="folio-top">
@@ -613,11 +666,11 @@ export default function App() {
               ) : tab === "save" ? (
                 <div className="save-menu">
                   <p className="folio-intro">
-                    Keep your progress close. This university lives on your
-                    device.
+                    Your Ripple Academy journal lives on this device. Keep a
+                    copy close.
                   </p>
                   <section>
-                    <h3>The scholar’s day</h3>
+                    <h3>Life at Ripple Academy</h3>
                     <label className="check-label">
                       <input
                         type="checkbox"
@@ -646,7 +699,7 @@ export default function App() {
                   <section>
                     <h3>Sound & atmosphere</h3>
                     <label>
-                      University atmosphere
+                      Entrance atmosphere
                       <select
                         value={day}
                         onChange={(e) => changeDay(e.target.value)}
@@ -659,7 +712,7 @@ export default function App() {
                       </select>
                     </label>
                     <label>
-                      Entrance parallax
+                      Scroll parallax
                       <select
                         value={parallax}
                         onChange={(e) => changeParallax(Number(e.target.value))}
@@ -847,7 +900,7 @@ export default function App() {
             </div>
           </aside>
         )}
-      </main>
+      </div>
       <nav className="command-bar" id="game-menu" aria-label="Game menus">
         {tabs
           .filter((t) =>

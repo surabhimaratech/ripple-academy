@@ -44,7 +44,11 @@ const rewardAmount = (v: unknown) => number(v, "reward amount", 0, 1000000);
 export function validateSave(input: unknown): State {
   let v = record(input);
   if ("format" in v) {
-    if (v.format !== "magical-university-save")
+    if (
+      !["magical-university-save", "ripple-academy-save"].includes(
+        String(v.format),
+      )
+    )
       throw Error("Unrecognized save format.");
     v = record(v.state);
   }
@@ -189,7 +193,7 @@ export function parseSave(json: string): State {
 export function serializeSave(state: State): string {
   return JSON.stringify(
     {
-      format: "magical-university-save",
+      format: "ripple-academy-save",
       exportedAt: new Date().toISOString(),
       state: validateSave(state),
     },

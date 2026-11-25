@@ -3,6 +3,14 @@ import { initialState, apply } from "./model";
 import { parseSave, serializeSave, validateSave } from "./save";
 import { unlockedKeepsakes } from "./keepsakes";
 describe("save files", () => {
+  it("imports pre-Ripple envelopes and exports the new identity without changing progress", () => {
+    const state = apply(initialState(), { type: "complete", id: "reading" });
+    const old = JSON.stringify({ format: "magical-university-save", state });
+    expect(parseSave(old)).toEqual(state);
+    const exported = serializeSave(parseSave(old));
+    expect(JSON.parse(exported).format).toBe("ripple-academy-save");
+    expect(parseSave(exported)).toEqual(state);
+  });
   it("round trips legacy v1 saves without rewriting balances or IDs", () => {
     const legacy = initialState();
     expect(parseSave(serializeSave(legacy))).toEqual(legacy);
