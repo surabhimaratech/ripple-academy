@@ -21,7 +21,11 @@ export type Pose =
   | "sit"
   | "observe"
   | "globe"
-  | "rest";
+  | "rest"
+  | "tea"
+  | "sleep"
+  | "stretch"
+  | "examine";
 export interface Activity {
   id: string;
   state: "idle" | "reading" | "writing" | "sitting" | "observing";
@@ -36,6 +40,7 @@ export interface Activity {
   thoughts: string[];
 }
 export interface RoomConfig {
+  afterSessionActivity?: string;
   bounds: RoomBounds;
   obstacles: Obstacle[];
   activities: Activity[];
@@ -78,6 +83,7 @@ export class ScholarBehavior {
   private thoughtIn = 48;
   private lastThought = "";
   private sessionActivity?: string;
+  private afterSession?: string;
   private sessionPaused = false;
   private sessionVariations: string[] = [];
   private sessionIntro?: string;
@@ -121,6 +127,7 @@ export class ScholarBehavior {
     variations: string[] = [],
     intro?: string,
   ) {
+    const finished = !!this.sessionActivity && !id;
     paused = !!id && paused;
     if (this.sessionActivity === id && this.sessionPaused === paused) return;
     if (this.sessionActivity !== id) {
@@ -131,6 +138,7 @@ export class ScholarBehavior {
     this.sessionActivity = id;
     this.sessionPaused = paused;
     if (id && !paused) {
+      this.afterSession = undefined;
       this.manualRemaining = 0;
       this.choose();
     } else if (id && paused) {
@@ -143,6 +151,8 @@ export class ScholarBehavior {
       this.path = [];
       this.state = "idle";
       this.remaining = 3;
+      if (finished && this.autonomous && this.manualRemaining <= 0)
+        this.afterSession = this.room.afterSessionActivity;
     }
   }
   takeEvents() {
@@ -172,6 +182,7 @@ export class ScholarBehavior {
     if (!enabled) this.thought = null;
   }
   private control() {
+    this.afterSession = undefined;
     this.manualRemaining = MANUAL_SECONDS;
     this.resume = undefined;
     this.thought = null;
@@ -257,6 +268,18 @@ export class ScholarBehavior {
       if (next) {
         const route = this.nav.path(this.position, next.point);
         if (route) {
+          if (
+            this.activity?.id === next.id &&
+            Math.hypot(
+              this.position.x - next.point.x,
+              this.position.y - next.point.y,
+            ) < 0.5
+          ) {
+            this.remaining = this.range(...next.seconds) + 0.9;
+            this.engaged = 0;
+            this.moving = false;
+            return;
+          }
           if (this.activity?.offsetY) this.departure = 0.8;
           this.activity = undefined;
           this.targetActivity = next;
@@ -271,6 +294,18 @@ export class ScholarBehavior {
       this.state = "player-controlled";
       this.activity = undefined;
       return;
+    }
+    if (this.afterSession) {
+      const next = this.room.activities.find((a) => a.id === this.afterSession);
+      this.afterSession = undefined;
+      const path = next && this.nav.path(this.position, next.point);
+      if (next && path) {
+        this.activity = undefined;
+        this.targetActivity = next;
+        this.path = path;
+        this.state = "walking-to-object";
+        return;
+      }
     }
     const choices = this.room.activities.map((activity) => ({
       activity,
@@ -314,6 +349,18 @@ export class ScholarBehavior {
       this.activity = undefined;
       this.state = "idle";
       this.remaining = 4;
+      return;
+    }
+    if (
+      this.activity?.id === next.id &&
+      Math.hypot(
+        this.position.x - next.point.x,
+        this.position.y - next.point.y,
+      ) < 0.5
+    ) {
+      this.remaining = this.range(...next.seconds) + 0.9;
+      this.engaged = 0;
+      this.moving = false;
       return;
     }
     if (this.activity?.offsetY) this.departure = 0.8;

@@ -18,97 +18,113 @@
           "name": "idle-down",
           "row": 0,
           "column": 0,
-          "height": 112
+          "height": 112,
+          "group": "locomotion-down"
         },
         {
           "name": "blink-down",
           "row": 0,
           "column": 1,
-          "height": 112
+          "height": 112,
+          "group": "locomotion-down"
         },
         {
           "name": "walk-a-down",
           "row": 0,
           "column": 2,
-          "height": 112
+          "height": 112,
+          "group": "locomotion-down"
         },
         {
           "name": "walk-b-down",
           "row": 0,
           "column": 3,
-          "height": 112
+          "height": 112,
+          "group": "locomotion-down"
         },
         {
           "name": "idle-right",
           "row": 1,
           "column": 0,
-          "height": 112
+          "height": 112,
+          "group": "locomotion-right"
         },
         {
           "name": "blink-right",
           "row": 1,
           "column": 1,
-          "height": 112
+          "height": 112,
+          "group": "locomotion-right"
         },
         {
           "name": "walk-a-right",
           "row": 1,
           "column": 2,
-          "height": 112
+          "height": 112,
+          "group": "locomotion-right"
         },
         {
           "name": "walk-b-right",
           "row": 1,
           "column": 3,
-          "height": 112
+          "height": 112,
+          "group": "locomotion-right"
         },
         {
           "name": "idle-up",
           "row": 2,
           "column": 0,
-          "height": 112
+          "height": 112,
+          "group": "locomotion-up"
         },
         {
           "name": "blink-up",
           "row": 2,
           "column": 1,
-          "height": 112
+          "height": 112,
+          "group": "locomotion-up"
         },
         {
           "name": "walk-a-up",
           "row": 2,
           "column": 2,
-          "height": 112
+          "height": 112,
+          "group": "locomotion-up"
         },
         {
           "name": "walk-b-up",
           "row": 2,
           "column": 3,
-          "height": 112
+          "height": 112,
+          "group": "locomotion-up"
         },
         {
           "name": "idle-left",
           "row": 3,
           "column": 0,
-          "height": 112
+          "height": 112,
+          "group": "locomotion-left"
         },
         {
           "name": "blink-left",
           "row": 3,
           "column": 1,
-          "height": 112
+          "height": 112,
+          "group": "locomotion-left"
         },
         {
           "name": "walk-a-left",
           "row": 3,
           "column": 2,
-          "height": 112
+          "height": 112,
+          "group": "locomotion-left"
         },
         {
           "name": "walk-b-left",
           "row": 3,
           "column": 3,
-          "height": 112
+          "height": 112,
+          "group": "locomotion-left"
         }
       ]
     },
@@ -122,73 +138,85 @@
           "name": "read-seated",
           "row": 0,
           "column": 0,
-          "height": 88
+          "height": 88,
+          "group": "seated-reading"
         },
         {
           "name": "read-page",
           "row": 0,
           "column": 1,
-          "height": 88
+          "height": 88,
+          "group": "seated-reading"
         },
         {
           "name": "type-a",
           "row": 0,
           "column": 2,
-          "height": 88
+          "height": 88,
+          "group": "typing"
         },
         {
           "name": "type-b",
           "row": 0,
           "column": 3,
-          "height": 88
+          "height": 88,
+          "group": "typing"
         },
         {
           "name": "write-a",
           "row": 1,
           "column": 0,
-          "height": 88
+          "height": 88,
+          "group": "writing"
         },
         {
           "name": "write-b",
           "row": 1,
           "column": 1,
-          "height": 88
+          "height": 88,
+          "group": "writing"
         },
         {
           "name": "observe-provisional",
           "row": 1,
           "column": 2,
-          "height": 112
+          "height": 112,
+          "group": "observe-provisional"
         },
         {
           "name": "window",
           "row": 1,
           "column": 3,
-          "height": 112
+          "height": 112,
+          "group": "window"
         },
         {
           "name": "rest",
           "row": 2,
           "column": 0,
-          "height": 88
+          "height": 88,
+          "group": "rest"
         },
         {
           "name": "browse",
           "row": 2,
           "column": 1,
-          "height": 112
+          "height": 112,
+          "group": "browse"
         },
         {
           "name": "read-standing",
           "row": 2,
           "column": 2,
-          "height": 112
+          "height": 112,
+          "group": "read-standing"
         },
         {
           "name": "celebrate",
           "row": 2,
           "column": 3,
-          "height": 112
+          "height": 112,
+          "group": "celebrate"
         }
       ]
     },
@@ -202,13 +230,107 @@
           "name": "telescope-a",
           "row": 0,
           "column": 0,
-          "height": 112
+          "height": 112,
+          "group": "telescope"
         },
         {
           "name": "telescope-b",
           "row": 0,
           "column": 1,
-          "height": 112
+          "height": 112,
+          "group": "telescope"
+        }
+      ]
+    },
+    {
+      "id": "expansion",
+      "src": "/art/heroine/activity-expansion.png",
+      "columns": 4,
+      "rows": 3,
+      "frames": [
+        {
+          "name": "think-work",
+          "row": 0,
+          "column": 0,
+          "height": 88,
+          "group": "think-work"
+        },
+        {
+          "name": "consult-a",
+          "row": 0,
+          "column": 1,
+          "height": 88,
+          "group": "consult"
+        },
+        {
+          "name": "consult-b",
+          "row": 0,
+          "column": 2,
+          "height": 88,
+          "group": "consult"
+        },
+        {
+          "name": "telescope-adjust",
+          "row": 0,
+          "column": 3,
+          "height": 112,
+          "group": "telescope-adjust"
+        },
+        {
+          "name": "tea-hold",
+          "row": 1,
+          "column": 0,
+          "height": 88,
+          "group": "tea"
+        },
+        {
+          "name": "tea-sip",
+          "row": 1,
+          "column": 1,
+          "height": 88,
+          "group": "tea"
+        },
+        {
+          "name": "stretch-a",
+          "row": 1,
+          "column": 2,
+          "height": 112,
+          "group": "stretch"
+        },
+        {
+          "name": "stretch-b",
+          "row": 1,
+          "column": 3,
+          "height": 112,
+          "group": "stretch"
+        },
+        {
+          "name": "sleep-a",
+          "row": 2,
+          "column": 0,
+          "height": 48,
+          "group": "sleep"
+        },
+        {
+          "name": "sleep-b",
+          "row": 2,
+          "column": 1,
+          "height": 48,
+          "group": "sleep"
+        },
+        {
+          "name": "examine",
+          "row": 2,
+          "column": 2,
+          "height": 112,
+          "group": "examine"
+        },
+        {
+          "name": "window-thought",
+          "row": 2,
+          "column": 3,
+          "height": 112,
+          "group": "window-thought"
         }
       ]
     }
@@ -241,6 +363,22 @@
     "telescope": {
       "frames": ["telescope-a", "telescope-b"],
       "frameMs": 2200
+    },
+    "consulting": {
+      "frames": ["consult-a", "consult-b"],
+      "frameMs": 1600
+    },
+    "tea": {
+      "frames": ["tea-hold", "tea-sip", "tea-sip", "tea-hold"],
+      "frameMs": 2200
+    },
+    "stretch": {
+      "frames": ["stretch-a", "stretch-b", "stretch-b", "stretch-a"],
+      "frameMs": 1600
+    },
+    "sleeping": {
+      "frames": ["sleep-a", "sleep-b"],
+      "frameMs": 3600
     }
   }
 }

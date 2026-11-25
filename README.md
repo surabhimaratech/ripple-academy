@@ -76,7 +76,9 @@ The shared transparent artwork set includes a portrait, four directional idle/bl
 
 `public/art/heroine/animations.json` controls source grids, named poses and frame timing. The renderer normalizes alpha silhouettes into aligned 96 × 144 canvases, with the same foot anchor and uniform scaling. Reduced motion uses still poses and disables blinking/breathing. Room artwork, navigation, autonomous behavior and rewards remain separate.
 
-These are short animation cycles rather than a full eight-frame hand-authored production set. Window/rest/browse/celebration use authored still poses with limited variations. Additional directional activity poses, sit/stand transitions and exact desk/telescope contact artwork remain artist refinements. See the [complete asset and animation status](docs/art/HEROINE-PRODUCTION.md).
+The activity expansion adds type/think/book-consultation work loops, telescope adjustment, chart consultation, tea/coffee, bed rest, and post-session stretching. Desk fronts, chair arms and the quilt occlude the heroine using separate masks; approved character PNGs and room paintings are unchanged. Related frames share registration to prevent scale/anchor flicker. Fully hand-drawn sit/stand/bed-entry transitions and more directional activity variants remain future artwork. See the [current animation status and remaining limitations](docs/art/HEROINE-ACTIVITY-EXPANSION.md).
+
+**Development preview:** open `/?preview=heroine` on the Vite server, for example [the local animation studio](http://127.0.0.1:5182/?preview=heroine). Inspect every animation or individual raw frame, pause/scrub, change zoom, compare foreground occlusion, and test reduced motion. This page does not mount saved progress and is excluded from production builds.
 
 ## Real-world activity sessions
 
@@ -150,7 +152,7 @@ Saves belong to this browser profile and origin. Clearing storage removes the ac
 - `src/game/Library.tsx`: React/Phaser bridge and visibility/resize lifecycle for the scene registry.
 - `src/ui/`: accessible folio/editor/session/curriculum controls, preferences and optional sound.
 
-Plans: [original architecture](docs/PLAN.md), [visual polish](docs/MILESTONE-1.5.md), [living scholar](docs/MILESTONE-1.6.md), [university milestone](docs/MILESTONE-2.md). See the [Ripple entrance plan](docs/MILESTONE-2.1.md) , the [continuous arrival plan](docs/MILESTONE-2.2.md), and [current verification](docs/VERIFICATION-MILESTONE-2.3.md).
+Plans: [original architecture](docs/PLAN.md), [visual polish](docs/MILESTONE-1.5.md), [living scholar](docs/MILESTONE-1.6.md), [university milestone](docs/MILESTONE-2.md). See the [Ripple entrance plan](docs/MILESTONE-2.1.md) , the [continuous arrival plan](docs/MILESTONE-2.2.md), and [current verification](docs/VERIFICATION-MILESTONE-2.3.1.md).
 
 ## Art and attribution
 

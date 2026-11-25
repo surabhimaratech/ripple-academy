@@ -9,6 +9,7 @@ import {
 import { transition } from "./exterior";
 import type { Location, ActivitySession } from "../domain/sessions";
 import { ScholarBehavior } from "./behavior";
+import { workSample, telescopeSample } from "../heroine/programs";
 import { preloadHeroine } from "../heroine/textures";
 import { sessionPlan } from "./sessionActivity";
 import { ScholarView } from "./scholarView";
@@ -60,7 +61,7 @@ class GrandLibrary extends Phaser.Scene {
     this.registry.set(`behavior:${this.definition.id}`, this.behavior);
     this.behavior.setAutonomous(this.registry.get("autonomous") !== false);
     this.behavior.setThoughts(this.registry.get("thoughts") !== false);
-    this.view = new ScholarView(this);
+    this.view = new ScholarView(this, this.definition.id);
     this.heroine = this.view.sprite;
     this.prompt = this.add
       .text(0, 0, "", {
@@ -232,8 +233,20 @@ class GrandLibrary extends Phaser.Scene {
           Math.min(1125, Math.max(155, this.heroine.x)),
           this.heroine.y - 127,
         );
+    const engaged =
+      this.behavior.activity &&
+      !this.behavior.moving &&
+      !["walking-to-object", "wandering", "celebrating"].includes(
+        this.behavior.state,
+      );
+    const activityLabel =
+      engaged && this.behavior.pose === "code"
+        ? workSample(this.behavior.engaged, this.reduced).label
+        : engaged && this.behavior.activity?.id === "telescope"
+          ? telescopeSample(this.behavior.engaged, this.reduced).label
+          : this.behavior.label;
     const status = {
-      label: this.behavior.label,
+      label: activityLabel,
       state: this.behavior.state,
       manual: Math.ceil(this.behavior.manualRemaining),
     };

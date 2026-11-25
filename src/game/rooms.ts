@@ -18,6 +18,7 @@ export interface RoomDefinition {
 }
 const make = (a: Activity) => a;
 const study: RoomConfig = {
+  afterSessionActivity: "study-stretch",
   bounds,
   obstacles: [
     { x: 420, y: 350, w: 305, h: 83 },
@@ -110,6 +111,40 @@ const study: RoomConfig = {
       weight: 0.7,
       object: "keepsakes",
       thoughts: ["Little things worth keeping."],
+    }),
+    make({
+      id: "study-tea",
+      state: "sitting",
+      label: "Sipping tea in her armchair",
+      point: { x: 153, y: 560 },
+      facing: "down",
+      pose: "tea",
+      offsetY: -50,
+      seconds: [28, 45],
+      weight: 1.2,
+      thoughts: ["A small, quiet pleasure."],
+    }),
+    make({
+      id: "study-sleep",
+      state: "idle",
+      label: "Resting beneath the quilt",
+      point: { x: 880, y: 550 },
+      facing: "down",
+      pose: "sleep",
+      seconds: [45, 75],
+      weight: 0.65,
+      thoughts: [],
+    }),
+    make({
+      id: "study-stretch",
+      state: "idle",
+      label: "A gentle stretch after studying",
+      point: { x: 812, y: 592 },
+      facing: "down",
+      pose: "stretch",
+      seconds: [7, 11],
+      weight: 0.8,
+      thoughts: [],
     }),
     make({
       id: "study-rest",

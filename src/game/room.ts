@@ -101,6 +101,18 @@ export const libraryActivities: Activity[] = [
     thoughts: ["Perhaps a cup of tea."],
   },
   {
+    id: "library-tea",
+    state: "sitting",
+    label: "Enjoying tea by the books",
+    point: { x: 156, y: 575 },
+    facing: "down",
+    pose: "tea",
+    offsetY: -68,
+    seconds: [28, 45],
+    weight: 1.1,
+    thoughts: ["Perhaps one more chapter after tea."],
+  },
+  {
     id: "chest",
     state: "observing",
     label: "Looking through her keepsake chest",

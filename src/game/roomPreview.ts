@@ -40,7 +40,7 @@ export function renderRoomPreview(id: Interior): Promise<string> {
               const d = roomDefinitions[id];
               d.paint(this, true);
               const scholar = new ScholarBehavior(d.config, () => 0.5, d.start);
-              new ScholarView(this).update(scholar, 0, true);
+              new ScholarView(this, d.id).update(scholar, 0, true);
               this.game.events.once(Phaser.Core.Events.POST_RENDER, () => {
                 (
                   this.game.renderer as Phaser.Renderer.Canvas.CanvasRenderer

@@ -102,3 +102,24 @@ export function anchoredFrame(
     height,
   };
 }
+
+/** One scale and horizontal reference for a related loop; hands cannot recenter the whole body. */
+export function registeredFrames(
+  bounds: Rect[],
+  targetHeight: number,
+  canvas: { width: number; height: number; footX: number; footY: number },
+): Rect[] {
+  const left = Math.min(...bounds.map((b) => b.x)),
+    right = Math.max(...bounds.map((b) => b.x + b.width));
+  const scale = Math.min(
+    targetHeight / Math.max(...bounds.map((b) => b.height)),
+    (canvas.width - 8) / (right - left),
+  );
+  const center = (left + right) / 2;
+  return bounds.map((b) => ({
+    x: Math.round(canvas.footX + (b.x - center) * scale),
+    y: canvas.footY - Math.round(b.height * scale),
+    width: Math.round(b.width * scale),
+    height: Math.round(b.height * scale),
+  }));
+}

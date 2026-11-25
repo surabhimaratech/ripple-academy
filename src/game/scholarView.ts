@@ -1,41 +1,116 @@
 import Phaser from "phaser";
 import type { ScholarBehavior } from "./behavior";
+import type { Interior } from "../domain/sessions";
 import { createHeroineTextures } from "../heroine/textures";
 import { heroine } from "../heroine/assets";
-import { heroineFrame } from "../heroine/animation";
-/** Canonical artwork rendering only. Navigation and activity decisions stay in the controller. */
+import { heroineFrame, type HeroinePose } from "../heroine/animation";
+import {
+  placementFor,
+  posePhase,
+  visibleRegions,
+  type Placement,
+} from "../heroine/presentation";
 export class ScholarView {
   readonly sprite: Phaser.GameObjects.Sprite;
   readonly shadow: Phaser.GameObjects.Ellipse;
-  private offset = 0;
+  private outgoing: Phaser.GameObjects.Sprite;
+  private maskShape: Phaser.GameObjects.Graphics;
+  private outgoingMaskShape: Phaser.GameObjects.Graphics;
   private clock = 0;
-  constructor(scene: Phaser.Scene) {
+  private blend = 1;
+  private lastKey = "";
+  constructor(
+    scene: Phaser.Scene,
+    private room: Interior = "grand-library",
+  ) {
     createHeroineTextures(scene);
+    const origin = [
+      heroine.canvas.footX / heroine.canvas.width,
+      heroine.canvas.footY / heroine.canvas.height,
+    ];
     this.shadow = scene.add.ellipse(642, 562, 40, 11, 0x1c2030, 0.4);
     this.sprite = scene.add
       .sprite(642, 564, "heroine-idle-down")
-      .setOrigin(
-        heroine.canvas.footX / heroine.canvas.width,
-        heroine.canvas.footY / heroine.canvas.height,
-      );
+      .setOrigin(origin[0], origin[1]);
+    this.outgoing = scene.add
+      .sprite(642, 564, "heroine-idle-down")
+      .setOrigin(origin[0], origin[1])
+      .setVisible(false);
+    this.maskShape = scene.make.graphics({ x: 0, y: 0 });
+    this.outgoingMaskShape = scene.make.graphics({ x: 0, y: 0 });
+    const mask = this.maskShape.createGeometryMask();
+
+    this.sprite.setMask(mask);
+    const previousMask = this.outgoingMaskShape.createGeometryMask();
+
+    this.outgoing.setMask(previousMask);
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.maskShape.destroy();
+      this.outgoingMaskShape.destroy();
+      mask.destroy();
+      previousMask.destroy();
+    });
+  }
+  private previousOccluders: Placement["occluders"] = [];
+  private drawMask(
+    shape: Phaser.GameObjects.Graphics,
+    occluders: Placement["occluders"],
+  ) {
+    shape.clear().fillStyle(0xffffff);
+    for (const r of visibleRegions(occluders))
+      shape.fillRect(r.x, r.y, r.width, r.height);
+  }
+  render(
+    pose: HeroinePose,
+    placement: Placement,
+    dt: number,
+    reduced: boolean,
+    overrideFrame?: string,
+  ) {
+    const frame = overrideFrame ?? heroineFrame(pose, reduced);
+    const key = `${placement.key}:${posePhase(frame)}`;
+    if (key !== this.lastKey) {
+      if (this.lastKey && !reduced) {
+        this.outgoing
+          .setTexture(this.sprite.texture.key)
+          .setPosition(this.sprite.x, this.sprite.y)
+          .setScale(1)
+          .setDepth(this.sprite.depth)
+          .setAlpha(1)
+          .setVisible(true);
+        this.drawMask(this.outgoingMaskShape, this.previousOccluders);
+        this.blend = 0;
+      } else {
+        this.blend = 1;
+        this.outgoing.setVisible(false);
+      }
+      this.lastKey = key;
+    }
+    this.blend = reduced ? 1 : Math.min(1, this.blend + dt / 0.2);
+    this.outgoing.setAlpha(1 - this.blend);
+    if (this.blend === 1) this.outgoing.setVisible(false);
+    this.drawMask(this.maskShape, placement.occluders);
+    this.previousOccluders = placement.occluders;
+    const breathing =
+      !reduced && !pose.moving ? 1 + Math.sin(pose.clock * 1.4) * 0.002 : 1;
+    this.sprite
+      .setTexture(`heroine-${frame}`)
+      .setPosition(placement.x, placement.y)
+      .setScale(1, breathing)
+      .setDepth(placement.depth)
+      .setAlpha(this.blend);
+    this.shadow
+      .setPosition(placement.x, placement.y - 3)
+      .setDepth(placement.depth - 1)
+      .setVisible(!pose.engaged && placement.key === "standing");
   }
   update(b: ScholarBehavior, dt: number, reduced: boolean) {
     this.clock += dt;
     const engaged =
       !!b.activity &&
       !b.moving &&
-      b.state !== "walking-to-object" &&
-      b.state !== "wandering";
-    const writing = engaged && (b.pose === "code" || b.pose === "write");
-    const telescope = engaged && b.activity?.id === "telescope";
-    const desired = engaged
-      ? b.offsetY + (writing ? -40 : telescope ? -22 : 0)
-      : 0;
-    this.offset = reduced
-      ? desired
-      : this.offset + (desired - this.offset) * Math.min(1, dt * 7);
-    if (Math.abs(desired - this.offset) < 0.1) this.offset = desired;
-    const frame = heroineFrame(
+      !["walking-to-object", "wandering"].includes(b.state);
+    this.render(
       {
         facing: b.facing,
         moving: b.moving,
@@ -46,21 +121,9 @@ export class ScholarView {
         clock: this.clock,
         activityTime: b.engaged,
       },
+      placementFor(this.room, b),
+      dt,
       reduced,
     );
-    const breathing =
-      !reduced && !b.moving ? 1 + Math.sin(this.clock * 1.4) * 0.002 : 1;
-    this.sprite
-      .setTexture(`heroine-${frame}`)
-      .setPosition(
-        b.position.x + (telescope ? 22 : 0),
-        b.position.y + this.offset,
-      )
-      .setScale(1, breathing)
-      .setDepth(b.position.y);
-    this.shadow
-      .setPosition(b.position.x, b.position.y - 3)
-      .setDepth(b.position.y - 1)
-      .setVisible(Math.abs(this.offset) < 5 && !engaged);
   }
 }

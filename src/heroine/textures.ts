@@ -1,6 +1,11 @@
 import type Phaser from "phaser";
 import { heroine, validateHeroineManifest } from "./assets";
-import { atlasCell, silhouetteBounds, anchoredFrame } from "./atlas";
+import {
+  atlasCell,
+  silhouetteBounds,
+  registeredFrames,
+  type Rect,
+} from "./atlas";
 const normalized = new Map<string, HTMLCanvasElement>();
 export function preloadHeroine(scene: Phaser.Scene) {
   for (const atlas of heroine.atlases)
@@ -16,58 +21,82 @@ export function createHeroineTextures(scene: Phaser.Scene) {
     const image = scene.textures
       .get(sourceKey)
       .getSourceImage() as HTMLImageElement;
+    const groups = new Map<
+      string,
+      {
+        name: string;
+        height: number;
+        canvas: HTMLCanvasElement;
+        bounds: Rect;
+      }[]
+    >();
     for (const f of atlas.frames) {
       const key = `heroine-${f.name}`;
-      if (scene.textures.exists(key)) continue;
-      if (!normalized.has(key)) {
-        const cell = atlasCell(
-          image.width,
-          image.height,
-          atlas.columns,
-          atlas.rows,
-          f.column,
-          f.row,
-        );
-        const scratch = document.createElement("canvas");
-        scratch.width = cell.width;
-        scratch.height = cell.height;
-        const ctx = scratch.getContext("2d", { willReadFrequently: true })!;
-        ctx.drawImage(
-          image,
-          cell.x,
-          cell.y,
-          cell.width,
-          cell.height,
-          0,
-          0,
-          cell.width,
-          cell.height,
-        );
-        const bounds = silhouetteBounds(
-          ctx.getImageData(0, 0, cell.width, cell.height).data,
-          cell.width,
-          cell.height,
-        );
-        const destination = anchoredFrame(bounds, f.height, heroine.canvas);
+      if (normalized.has(key)) continue;
+      const cell = atlasCell(
+        image.width,
+        image.height,
+        atlas.columns,
+        atlas.rows,
+        f.column,
+        f.row,
+      );
+      const scratch = document.createElement("canvas");
+      scratch.width = cell.width;
+      scratch.height = cell.height;
+      const ctx = scratch.getContext("2d", { willReadFrequently: true })!;
+      ctx.drawImage(
+        image,
+        cell.x,
+        cell.y,
+        cell.width,
+        cell.height,
+        0,
+        0,
+        cell.width,
+        cell.height,
+      );
+      const bounds = silhouetteBounds(
+        ctx.getImageData(0, 0, cell.width, cell.height).data,
+        cell.width,
+        cell.height,
+      );
+      const entries = groups.get(f.group) ?? [];
+      entries.push({ name: key, height: f.height, canvas: scratch, bounds });
+      groups.set(f.group, entries);
+    }
+    for (const entries of groups.values()) {
+      const placements = registeredFrames(
+        entries.map((f) => f.bounds),
+        entries[0].height,
+        heroine.canvas,
+      );
+      entries.forEach((f, i) => {
         const canvas = document.createElement("canvas");
         canvas.width = heroine.canvas.width;
         canvas.height = heroine.canvas.height;
-        const target = canvas.getContext("2d")!;
-        target.imageSmoothingEnabled = false;
-        target.drawImage(
-          scratch,
-          bounds.x,
-          bounds.y,
-          bounds.width,
-          bounds.height,
-          destination.x,
-          destination.y,
-          destination.width,
-          destination.height,
+        const ctx = canvas.getContext("2d")!;
+        ctx.imageSmoothingEnabled = false;
+        const b = f.bounds,
+          d = placements[i];
+        ctx.drawImage(
+          f.canvas,
+          b.x,
+          b.y,
+          b.width,
+          b.height,
+          d.x,
+          d.y,
+          d.width,
+          d.height,
         );
-        normalized.set(key, canvas);
-      }
-      scene.textures.addCanvas(key, normalized.get(key)!);
+        normalized.set(f.name, canvas);
+      });
+    }
+    for (const f of atlas.frames) {
+      const key = `heroine-${f.name}`;
+      if (!scene.textures.exists(key))
+        scene.textures.addCanvas(key, normalized.get(key)!);
     }
   }
 }

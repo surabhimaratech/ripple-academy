@@ -33,3 +33,7 @@ Use case: stylized-concept. Original production layered game asset: front-facing
 ## Milestone 2.3 — canonical heroine
 
 The original user-provided character references are preserved under `public/art/references/`. Separate generated portrait and transparent locomotion/activity/eyepiece atlases are in `public/art/heroine/`. See [the complete heroine asset status, provenance and final built-in ImageGen prompts](art/HEROINE-PRODUCTION.md). The complete reference presentation sheets are never used as in-game textures.
+
+## Milestone 2.3.1 — supplemental activity poses
+
+Only `public/art/heroine/activity-expansion.png` is new. Approved character/room artwork is unchanged. [The activity expansion guide](art/HEROINE-ACTIVITY-EXPANSION.md) records dimensions, atlas positions, integration, limitations and the exact built-in ImageGen prompt.

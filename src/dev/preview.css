@@ -1,0 +1,114 @@
+html:has(.animation-lab) {
+  scroll-behavior: auto;
+}
+.animation-lab {
+  min-height: 100vh;
+  padding: 24px 30px;
+  color: #e8ddc5;
+  background: #141e29;
+  font-family: Georgia, serif;
+}
+.animation-lab header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 22px;
+  border-bottom: 1px solid #6e6559;
+}
+.animation-lab header span {
+  font: 11px monospace;
+  letter-spacing: 2px;
+  color: #b8a478;
+}
+.animation-lab h1 {
+  font-size: 30px;
+  font-weight: normal;
+  margin: 12px 0 0;
+}
+.animation-lab a {
+  color: #dfc68b;
+}
+.lab-layout {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 26px;
+  padding-top: 24px;
+}
+.lab-layout aside {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.lab-layout label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 15px;
+}
+.lab-layout select {
+  width: 100%;
+  font: 14px Georgia;
+  padding: 9px;
+  background: #27313d;
+  color: #ebdfc7;
+  border: 1px solid #776b58;
+}
+.lab-layout input[type="range"] {
+  width: 100%;
+  accent-color: #cab482;
+}
+.lab-layout .lab-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+.lab-layout button {
+  background: #35414d;
+  border: 1px solid #a48b60;
+  padding: 9px;
+  color: #ebd6a5;
+  font: 15px Georgia;
+}
+.lab-step {
+  display: flex;
+  gap: 10px;
+}
+.lab-step button {
+  flex: 1;
+}
+.lab-layout output {
+  font: 13px monospace;
+  color: #8ed5c8;
+  padding: 10px;
+  background: #0c1722;
+}
+.lab-layout aside p {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #a8b7bd;
+  margin: 0;
+}
+.lab-stage {
+  min-width: 0;
+  position: sticky;
+  top: 20px;
+  align-self: start;
+}
+.lab-canvas {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: #1b2733;
+  border: 1px solid #7b6d52;
+  position: relative;
+  overflow: hidden;
+}
+.lab-canvas canvas {
+  image-rendering: pixelated;
+  display: block;
+}
+.lab-stage p {
+  font-size: 15px;
+  color: #b6c7c5;
+  margin-top: 15px;
+}

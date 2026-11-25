@@ -1,4 +1,6 @@
-# Ripple Academy heroine — production assets and status
+# Ripple Academy heroine — original Milestone 2.3 production record
+
+Current animation/occlusion work is documented in [Milestone 2.3.1](HEROINE-ACTIVITY-EXPANSION.md). The original approved PNGs listed below remain unchanged.
 
 The user-approved canonical design sheet is preserved unmodified at `public/art/references/ripple-academy-heroine-design-sheet.png`. An additional user-supplied sprite-sheet presentation discovered in the project is preserved as `public/art/references/ripple-academy-heroine-animation-reference.png` for future animation guidance. Neither complete reference sheet is loaded by the game. The source copies at the project root are untouched.
 
