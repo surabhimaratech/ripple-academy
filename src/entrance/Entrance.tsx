@@ -11,6 +11,7 @@ import type { Tab } from "../ui/Folio";
 import { Panorama } from "./Panorama";
 import { RoomPreview } from "./RoomPreview";
 import { entranceArt } from "./assets";
+import { useJourney } from "./useJourney";
 import { localTimeOfDay } from "../game/atmosphere";
 const wings = [
   {
@@ -70,6 +71,7 @@ export function Entrance({
     }, 60000);
     return () => clearInterval(timer);
   }, []);
+  const journey = useJourney(reduced, intensity);
   const atmosphere = day === "system" ? localTimeOfDay(hour) : day;
   const p = progression(state?.xp ?? 0),
     current = state ? activeSession(state) : undefined;
@@ -88,7 +90,7 @@ export function Entrance({
         </a>
         <div>
           <a href="#grounds">The grounds</a>
-          <a href="#academic-wings">Academic wings</a>
+          <a href="#academic-wings">Skip to Academic Wings</a>
           <button className="returning-link" onClick={() => visit(resume)}>
             {current
               ? `Resume ${current.title.toLowerCase()}`
@@ -104,14 +106,64 @@ export function Entrance({
         </div>
       </nav>
       <section
-        className="arrival-section"
+        className="arrival-section cinematic-journey"
+        ref={journey.track}
         id="arrival"
         aria-labelledby="arrival-title"
       >
-        <div className="arrival-sticky">
-          <Panorama reduced={reduced} intensity={intensity} />
+        <span
+          className="journey-anchor approach-anchor"
+          id="approach"
+          aria-hidden="true"
+        />
+        <span
+          className="journey-anchor gates-anchor"
+          id="gates"
+          aria-hidden="true"
+        />
+        <span
+          className="journey-anchor grounds-anchor"
+          id="grounds"
+          aria-hidden="true"
+        />
+        <div className="arrival-sticky cinematic-viewport">
+          <div className="journey-exterior">
+            <Panorama
+              reduced={reduced}
+              intensity={intensity}
+              journey={journey.frame}
+            />
+          </div>
+          <div className="journey-courtyard" aria-hidden="true">
+            <img
+              className="courtyard-art"
+              src={entranceArt.courtyard}
+              alt=""
+              width="1536"
+              height="1024"
+            />
+            <div className="grounds-mist" />
+          </div>
+          <div className="journey-gates" aria-hidden="true">
+            <div className="gate-assembly">
+              <div className="gate-light" />
+              <div className="gate-leaves">
+                <div className="gate-leaf gate-left">
+                  <img src={entranceArt.gates.doors} alt="" />
+                </div>
+                <div className="gate-leaf gate-right">
+                  <img src={entranceArt.gates.doors} alt="" />
+                </div>
+              </div>
+              <img
+                className="gate-surround"
+                src={entranceArt.gates.surround}
+                alt=""
+              />
+            </div>
+          </div>
           <div className="arrival-vignette" />
-          <div className="arrival-identity">
+          <div className="arrival-identity" inert={!journey.arrivalAccessible}>
             <img
               className="arrival-mark"
               src="/ripple-mark.svg"
@@ -124,134 +176,144 @@ export function Entrance({
               <span>Academy</span>
             </h1>
             <p className="academy-motto">Through curiosity, to the stars.</p>
-            <a className="academy-enter" href="#grounds">
+            <a className="academy-enter" href="#approach">
               Enter the Academy
             </a>
           </div>
-          <a className="scroll-invitation" href="#grounds">
+          <a
+            className="scroll-invitation"
+            href="#approach"
+            inert={!journey.arrivalAccessible}
+          >
             <span>THE NEXT CHAPTER AWAITS</span>
             <span className="scroll-line" aria-hidden="true" />
           </a>
           <span className="arrival-aside">A place to become yourself.</span>
-        </div>
-      </section>
-      <section
-        className="grounds-section"
-        id="grounds"
-        aria-labelledby="grounds-title"
-      >
-        <img
-          className="courtyard-art"
-          src={entranceArt.courtyard}
-          alt="An ivy-covered Ripple Academy courtyard, with a bronze dolphin fountain, lanterns and an illuminated Gothic gateway"
-          width="1536"
-          height="1024"
-          loading="lazy"
-        />
-        <div className="grounds-shade" />
-        <div className="grounds-mist" aria-hidden="true" />
-        <div className="grounds-copy">
-          <span className="entrance-section-label">
-            I. &nbsp; WITHIN THE GROUNDS
-          </span>
-          <h2 id="grounds-title">
-            Welcome back,
-            <br />
-            <em>scholar.</em>
-          </h2>
-          <p className="grounds-introduction">
-            A quiet place for the person you’re becoming.
-            <br />
-            There is no hurry. Your next chapter is yours.
-          </p>
-          <div className="grounds-progress" aria-label="Your academic progress">
-            <span>
-              {academicRank(state?.xp ?? 0)}
-              <small>Level {p.level}</small>
-            </span>
-            <span>
-              {state?.xp ?? 0}
-              <small>experience</small>
-            </span>
-            <span>
-              ◈ {state?.gold ?? 0}
-              <small>gold</small>
-            </span>
-          </div>
-          <div className="grounds-xp">
-            <progress
-              aria-label="Experience toward next level"
-              max={p.needed}
-              value={p.current}
-            />
-            <span>
-              {p.current} / {p.needed} XP to the next chapter
-            </span>
-          </div>
-          <div className="grounds-actions">
-            <button className="academy-enter" onClick={() => open("sessions")}>
-              Begin a real-world activity
-            </button>
-            <button className="grounds-text-link" onClick={() => visit(resume)}>
-              Continue in {roomNames[resume]}
-            </button>
-          </div>
-          <div className="personal-chapters">
-            <div>
-              <button
-                className="chapter-heading"
-                onClick={() => open("quests")}
+          <div
+            className="grounds-section journey-welcome"
+            aria-labelledby="grounds-title"
+            inert={!journey.groundsAccessible}
+          >
+            <div className="grounds-shade" />
+            <div className="grounds-copy">
+              <span className="entrance-section-label">
+                I. &nbsp; WITHIN THE GROUNDS
+              </span>
+              <h2 id="grounds-title">
+                Welcome back,
+                <br />
+                <em>scholar.</em>
+              </h2>
+              <p className="grounds-introduction">
+                A quiet place for the person you’re becoming.
+                <br />
+                There is no hurry. Your next chapter is yours.
+              </p>
+              <div
+                className="grounds-progress"
+                aria-label="Your academic progress"
               >
-                Your quest journal <span>{activeQuests.length} open</span>
-              </button>
-              {activeQuests.slice(0, 2).map((q) => (
+                <span>
+                  {academicRank(state?.xp ?? 0)}
+                  <small>Level {p.level}</small>
+                </span>
+                <span>
+                  {state?.xp ?? 0}
+                  <small>experience</small>
+                </span>
+                <span>
+                  ◈ {state?.gold ?? 0}
+                  <small>gold</small>
+                </span>
+              </div>
+              <div className="grounds-xp">
+                <progress
+                  aria-label="Experience toward next level"
+                  max={p.needed}
+                  value={p.current}
+                />
+                <span>
+                  {p.current} / {p.needed} XP to the next chapter
+                </span>
+              </div>
+              <div
+                className="grounds-actions"
+                inert={!journey.controlsAccessible}
+              >
                 <button
-                  className="chapter-line"
-                  key={q.id}
-                  onClick={() => open("quests")}
+                  className="academy-enter"
+                  onClick={() => open("sessions")}
                 >
-                  {q.title}
+                  Begin a real-world activity
                 </button>
-              ))}
-            </div>
-            <div>
-              <button
-                className="chapter-heading"
-                onClick={() => open("curriculum")}
+                <button
+                  className="grounds-text-link"
+                  onClick={() => visit(resume)}
+                >
+                  Continue in {roomNames[resume]}
+                </button>
+              </div>
+              <div
+                className="personal-chapters"
+                inert={!journey.controlsAccessible}
               >
-                Your personal curriculum
-              </button>
-              {state?.courses?.some((c) => c.active) ? (
-                state.courses
-                  .filter((c) => c.active)
-                  .slice(0, 2)
-                  .map((c) => (
+                <div>
+                  <button
+                    className="chapter-heading"
+                    onClick={() => open("quests")}
+                  >
+                    Your quest journal <span>{activeQuests.length} open</span>
+                  </button>
+                  {activeQuests.slice(0, 2).map((q) => (
                     <button
                       className="chapter-line"
-                      key={c.id}
+                      key={q.id}
+                      onClick={() => open("quests")}
+                    >
+                      {q.title}
+                    </button>
+                  ))}
+                </div>
+                <div>
+                  <button
+                    className="chapter-heading"
+                    onClick={() => open("curriculum")}
+                  >
+                    Your personal curriculum
+                  </button>
+                  {state?.courses?.some((c) => c.active) ? (
+                    state.courses
+                      .filter((c) => c.active)
+                      .slice(0, 2)
+                      .map((c) => (
+                        <button
+                          className="chapter-line"
+                          key={c.id}
+                          onClick={() => open("curriculum")}
+                        >
+                          {c.title}
+                        </button>
+                      ))
+                  ) : (
+                    <button
+                      className="chapter-line quiet"
                       onClick={() => open("curriculum")}
                     >
-                      {c.title}
+                      Make room for what you’d like to learn.
                     </button>
-                  ))
-              ) : (
-                <button
-                  className="chapter-line quiet"
-                  onClick={() => open("curriculum")}
-                >
-                  Make room for what you’d like to learn.
-                </button>
-              )}
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="grounds-caption">
+              <img src="/ripple-mark.svg" alt="" />
+              <span>
+                Small beginnings.
+                <br />
+                Extraordinary possibilities.
+              </span>
             </div>
           </div>
-        </div>
-        <div className="grounds-caption">
-          <img src="/ripple-mark.svg" alt="" />
-          <span>
-            Small beginnings.
-            <br />
-            Extraordinary possibilities.
-          </span>
         </div>
       </section>
       <section

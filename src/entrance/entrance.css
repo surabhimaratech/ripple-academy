@@ -742,3 +742,220 @@ html {
     animation: none;
   }
 }
+
+/* Milestone 2.2: one continuous native-scroll journey. */
+.cinematic-journey {
+  height: 500svh;
+  --title: 1;
+  --exterior: 1;
+  --courtyard: 0;
+  --courtyardScale: 1.09;
+  --gate: 0;
+  --gateScale: 0.55;
+  --gate-rotation: 0deg;
+  --gate-x: 14%;
+  --welcome: 0;
+  --progressInfo: 0;
+  --chapters: 0;
+  --light: 0;
+}
+.cinematic-viewport {
+  height: 100svh;
+  min-height: 610px;
+}
+.journey-anchor {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+.approach-anchor {
+  top: calc((100% - 100svh) * 0.25);
+}
+.gates-anchor {
+  top: calc((100% - 100svh) * 0.625);
+}
+.grounds-anchor {
+  top: calc((100% - 100svh) * 0.925);
+}
+.journey-exterior {
+  position: absolute;
+  inset: 0;
+  opacity: var(--exterior);
+}
+.cinematic-journey .arrival-vignette {
+  opacity: var(--title);
+  z-index: 8;
+}
+.cinematic-journey .arrival-identity {
+  opacity: var(--title);
+  transform: translateY(var(--title-y, 0px));
+  z-index: 9;
+}
+.cinematic-journey .arrival-aside,
+.cinematic-journey .scroll-invitation {
+  opacity: var(--title);
+  z-index: 9;
+}
+.journey-courtyard {
+  position: absolute;
+  inset: 0;
+  opacity: var(--courtyard);
+  overflow: hidden;
+}
+.journey-courtyard .courtyard-art {
+  z-index: 0;
+  transform: scale(var(--courtyardScale));
+}
+.journey-courtyard .grounds-mist {
+  z-index: 1;
+}
+.journey-gates {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  opacity: var(--gate);
+  pointer-events: none;
+}
+.gate-assembly {
+  position: absolute;
+  width: max(100vw, 160svh);
+  height: max(100svh, 62.5vw);
+  left: 50%;
+  top: 50%;
+  transform: translate(calc(-50% + var(--gate-x)), -50%) scale(var(--gateScale));
+  transform-origin: 50% 62%;
+  perspective: 1600px;
+}
+.gate-surround {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  image-rendering: pixelated;
+  z-index: 3;
+}
+.gate-leaves {
+  position: absolute;
+  left: 30%;
+  width: 40%;
+  top: 4%;
+  height: 96%;
+  perspective: 1100px;
+  transform-style: preserve-3d;
+}
+.gate-leaf {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  overflow: hidden;
+  backface-visibility: hidden;
+  filter: brightness(calc(1 - var(--gateAngle, 0) * 0.003));
+}
+.gate-leaf img {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 200%;
+  max-width: none;
+  image-rendering: pixelated;
+}
+.gate-left {
+  left: 0;
+  transform-origin: 0% 62%;
+  transform: rotateY(var(--gate-rotation));
+}
+.gate-right {
+  right: 0;
+  transform-origin: 100% 62%;
+  transform: rotateY(calc(-1 * var(--gate-rotation)));
+}
+.gate-left img {
+  left: 0;
+}
+.gate-right img {
+  right: 0;
+}
+.gate-light {
+  position: absolute;
+  inset: -8%;
+  z-index: 2;
+  opacity: var(--light);
+  background: radial-gradient(
+    ellipse at 50% 72%,
+    #ffe3a16b,
+    #d6ad4e12 35%,
+    transparent 65%
+  );
+  mix-blend-mode: screen;
+}
+.journey-welcome.grounds-section {
+  position: absolute;
+  inset: 0;
+  min-height: 0;
+  z-index: 7;
+  background: none;
+  overflow: hidden;
+  opacity: var(--welcome);
+}
+.journey-welcome .grounds-copy {
+  margin-block: 45px;
+}
+.journey-welcome .grounds-shade {
+  opacity: var(--progressInfo);
+  z-index: -1;
+}
+.journey-welcome .grounds-progress,
+.journey-welcome .grounds-xp {
+  opacity: var(--progressInfo);
+}
+.journey-welcome .grounds-actions,
+.journey-welcome .personal-chapters,
+.journey-welcome .grounds-caption {
+  opacity: var(--chapters);
+}
+.journey-welcome[inert] {
+  pointer-events: none;
+}
+.cinematic-journey + .wings-section {
+  min-height: 100svh;
+  box-shadow: 0 -40px 70px #091822;
+  z-index: 10;
+}
+.still .cinematic-journey {
+  height: 260svh;
+}
+@media (max-height: 800px) {
+  .journey-welcome .grounds-copy {
+    margin-block: 32px;
+  }
+  .journey-welcome .grounds-copy h2 {
+    font-size: 45px;
+    margin-block: 12px;
+  }
+  .journey-welcome .grounds-introduction {
+    margin-bottom: 14px;
+  }
+  .journey-welcome .grounds-progress {
+    padding-top: 15px;
+  }
+  .journey-welcome .grounds-xp {
+    margin-block: 12px 18px;
+  }
+  .journey-welcome .personal-chapters {
+    margin-top: 18px;
+    gap: 12px;
+  }
+  .journey-welcome .chapter-heading {
+    margin-bottom: 5px;
+  }
+}
+
+.journey-welcome .chapter-line {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

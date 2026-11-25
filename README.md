@@ -30,17 +30,19 @@ The production build is written to `dist/`. Type checking runs as part of the bu
 
 ## Arrive at your university
 
-The entrance is a cinematic, normally scrolling journey through three stages:
+The entrance is one continuous, normally scrolling journey:
 
-1. **Arrival** — one interconnected Gothic academy above a forest lake, with the celestial dolphin crest, motto and **Enter the Academy** action. No productivity panels obscure the initial view.
-2. **University grounds** — a detailed courtyard, welcome, academic rank, XP/gold, quests, curriculum and activity access.
-3. **Academic wings** — previews captured from the actual Grand Library, Personal Study and Observatory painters. Each opens its existing interactive room.
+1. **Arrival (0–20%)** — the approved Gothic academy and celestial dolphin identity, with a fading title.
+2. **Approach (20–40%)** — independent camera depths bring the pathway and entrance closer while distant sky/mountains move less.
+3. **Opening the gates (40–60%)** — ornate wooden leaves rotate around their outer hinges inside a stationary carved stone portal, revealing the approved courtyard. Scroll upward to close them again.
+4. **Within the grounds (60–80%)** — the welcome, academic progress and functional activity/quest/curriculum controls appear in a gentle stagger.
+5. **Academic wings (80–100%)** — normal document scrolling reveals previews captured from the actual Grand Library, Personal Study and Observatory painters. Each opens its existing interactive room.
 
-Use the header’s **Resume** shortcut to bypass the introduction. An active or paused activity takes priority; otherwise it returns to the last visited room. All destinations also have keyboard-accessible buttons.
+**Enter the Academy** smoothly scrolls into the approach. **Skip to Academic Wings** bypasses the sequence; **Resume** goes directly to the active/paused activity's room or the last visited room. The grounds anchor lands after the welcome controls appear. All navigation remains keyboard accessible.
 
-Seven separate canvas layers move at different depths as the document scrolls, with smooth interpolation, lake reflections, drifting mist, window warmth, sparse fireflies and an occasional owl. Scroll position remains controlled by the browser; there are no wheel handlers or pinned scrolling scripts.
+A sticky viewport, normalized timeline and bounded RAF smoothing coordinate the canvas layers, camera, perspective hinges and HTML welcome. No wheel/touch handlers, artificial scroll positions or animation dependencies are used. The seven approved exterior layers, typography, palette, logo and courtyard artwork are preserved; only the gateway assets are new.
 
-**Save & settings** offers Off, Very gentle, Gentle and Full scroll parallax. Reduced motion freezes decorative movement and disables smooth anchor scrolling. The entrance pauses canvas animation when hidden or out of view; room previews render once and destroy their temporary engine. Morning/afternoon/twilight/night settings apply subtle color grading to the moonlit artwork, rather than switching to fully repainted daylight scenes.
+**Save & settings** offers Off, Very gentle, Gentle and Full scroll parallax. Off disables camera movement and gate animation; reduced motion also uses a shorter journey, still scene changes and non-smooth anchor scrolling. Decorative drawing pauses when hidden or outside the exterior stage, and the timeline sleeps when settled. Morning/afternoon/twilight/night settings continue subtle color grading of the approved moonlit artwork.
 
 See the [entrance architecture and artwork replacement guide](docs/ENTRANCE-ARTWORK.md).
 
@@ -134,10 +136,10 @@ Saves belong to this browser profile and origin. Clearing storage removes the ac
 - `src/game/Library.tsx`: React/Phaser bridge and visibility/resize lifecycle for the scene registry.
 - `src/ui/`: accessible folio/editor/session/curriculum controls, preferences and optional sound.
 
-Plans: [original architecture](docs/PLAN.md), [visual polish](docs/MILESTONE-1.5.md), [living scholar](docs/MILESTONE-1.6.md), [university milestone](docs/MILESTONE-2.md). See the [Ripple entrance plan](docs/MILESTONE-2.1.md) and [current verification](docs/VERIFICATION-MILESTONE-2.1.md).
+Plans: [original architecture](docs/PLAN.md), [visual polish](docs/MILESTONE-1.5.md), [living scholar](docs/MILESTONE-1.6.md), [university milestone](docs/MILESTONE-2.md). See the [Ripple entrance plan](docs/MILESTONE-2.1.md) , the [continuous arrival plan](docs/MILESTONE-2.2.md), and [current verification](docs/VERIFICATION-MILESTONE-2.2.md).
 
 ## Art and attribution
 
-Library, Study, Observatory, scholar, crest, portrait and keepsake artwork is original, authored in TypeScript, SVG and CSS for this project. The entrance adds three original raster assets generated with OpenAI ImageGen: academy architecture, courtyard and foreground foliage. Supporting sky, mountain, mist, lake and forest layers are original SVG. See [asset provenance and final prompts](docs/ARTWORK-PROMPTS.md). The architecture, identity and silhouettes are original; no franchise assets, third-party sprites, fonts, photographs or music are used. Reward tones are synthesized locally with Web Audio. Dependencies retain their own licenses in `node_modules`.
+Library, Study, Observatory, scholar, crest, portrait and keepsake artwork is original, authored in TypeScript, SVG and CSS for this project. The entrance adds original raster assets generated with OpenAI ImageGen: academy architecture, courtyard, foreground foliage, carved gateway and ornate wooden doors. Supporting sky, mountain, mist, lake and forest layers are original SVG. See [asset provenance and final prompts](docs/ARTWORK-PROMPTS.md). The architecture, identity and silhouettes are original; no franchise assets, third-party sprites, fonts, photographs or music are used. Reward tones are synthesized locally with Web Audio. Dependencies retain their own licenses in `node_modules`.
 
 The scope remains three intimate rooms and a university entrance. There is no combat, survival system, character needs, authentication, cloud service, mobile layout, external application monitoring or dragon storyline.

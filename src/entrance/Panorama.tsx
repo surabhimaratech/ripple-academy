@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { entranceArt } from "./assets";
-import { scrollProgress, layerOffset, interpolate } from "./scroll";
+import { layerOffset } from "./scroll";
+import { layerCamera, type JourneyFrame } from "./journey";
 function loadImage(src: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image();
@@ -12,9 +13,11 @@ function loadImage(src: string) {
 export function Panorama({
   reduced,
   intensity,
+  journey,
 }: {
   reduced: boolean;
   intensity: number;
+  journey: RefObject<JourneyFrame>;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const options = useRef({ reduced, intensity });
@@ -40,13 +43,9 @@ export function Panorama({
       const dt = last ? Math.min((now - last) / 1000, 0.06) : 0;
       last = now;
       if (!opt.reduced) elapsed += dt;
-      const target = scrollProgress(
-        window.scrollY,
-        section.offsetTop,
-        section.offsetHeight,
-        window.innerHeight,
-      );
-      current = opt.reduced ? target : interpolate(current, target, dt || 0.05);
+      const pose = journey.current;
+      current = pose.progress;
+      if (current > 0.41) return;
       if (now - lastDraw > 48 || opt.reduced) {
         lastDraw = now;
         const width = canvas.clientWidth,
@@ -81,10 +80,21 @@ export function Panorama({
             opt.intensity,
             opt.reduced,
           );
-          const drift =
-            layer.id === "atmosphere" && !opt.reduced
+          const drift = opt.reduced
+            ? 0
+            : layer.id === "atmosphere"
               ? Math.sin(elapsed * 0.025) * 14
-              : 0;
+              : layer.id === "foreground" || layer.id === "forest"
+                ? Math.sin(elapsed * 0.14) * 1.2
+                : Math.sin(elapsed * 0.025) * 0.3;
+          const camera = layerCamera(
+            layer.id,
+            opt.reduced || opt.intensity <= 0 ? 0 : pose.approach,
+          );
+          ctx.save();
+          ctx.translate(800 + camera.x, 500 + camera.y);
+          ctx.scale(camera.scale, camera.scale);
+          ctx.translate(-800, -500);
           ctx.drawImage(images[i], x + drift, y + offset, w, h);
           if (layer.id === "lake") {
             const architecture = entranceArt.layers.find(
@@ -119,9 +129,18 @@ export function Panorama({
               ctx.stroke();
             }
           }
+          ctx.restore();
         }
         // Independent, sparse window/lantern warmth over the original painted facade.
         if (!opt.reduced) {
+          const camera = layerCamera(
+            "architecture",
+            opt.reduced || opt.intensity <= 0 ? 0 : pose.approach,
+          );
+          ctx.save();
+          ctx.translate(800 + camera.x, 500 + camera.y);
+          ctx.scale(camera.scale, camera.scale);
+          ctx.translate(-800, -500);
           const [ax, ay, aw, ah] = entranceArt.layers[3].box;
           const off = layerOffset(current, 0.1, 1000, opt.intensity, false);
           for (const [x, y] of [
@@ -143,6 +162,7 @@ export function Panorama({
             ctx.fillStyle = glow;
             ctx.fillRect(px - 13, py - 13, 26, 26);
           }
+          ctx.restore();
         }
         // Tiny owl and fireflies belong to the environment, not the progression system.
         if (!opt.reduced) {
@@ -190,7 +210,7 @@ export function Panorama({
       } else schedule();
     };
     const scrolling = () => {
-      if (options.current.reduced) schedule();
+      schedule();
     };
     const resize = new ResizeObserver(schedule);
     resize.observe(canvas);

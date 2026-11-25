@@ -47,6 +47,10 @@ export const entranceArt = {
       box: [-250, -100, 2100, 1400],
     },
   ] as const,
+  gates: {
+    doors: "/art/entrance/gates/door-pair.png",
+    surround: "/art/entrance/gates/portal.png",
+  },
   courtyard: "/art/entrance/courtyard.png",
   /** Optional supplied preview URLs override snapshots of the actual room renderer. */
   roomPreviews: {} as Partial<
