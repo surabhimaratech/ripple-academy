@@ -1,3 +1,4 @@
+import { ObservationJournal } from "./ui/ObservationJournal";
 import {
   FocusPage,
   FocusControls,
@@ -326,6 +327,11 @@ export default function App() {
         action.type === "focusResume")
     )
       prepareChime();
+    if (
+      (action.type === "focusPause" || action.type === "focusResume") &&
+      currentSession?.id === state?.focus?.current?.sessionId
+    )
+      action = { ...action, sessionElapsedMs: clock.read() };
     const result = await commit(
       () => repository.transact(action),
       success,
@@ -334,9 +340,16 @@ export default function App() {
     if (
       result &&
       (action.type === "focusStart" || action.type === "focusResume") &&
-      location !== "personal-study"
+      location !==
+        (action.type === "focusStart"
+          ? (action.room ?? "personal-study")
+          : (state?.focus?.current?.room ?? "personal-study"))
     )
-      visit("personal-study");
+      visit(
+        action.type === "focusStart"
+          ? (action.room ?? "personal-study")
+          : (state?.focus?.current?.room ?? "personal-study"),
+      );
     return result;
   }
   const timer = state?.focus?.current;
@@ -371,15 +384,36 @@ export default function App() {
     if (state) lastFocusRecord.current = id ?? "";
   }, [!!state, state?.focus?.history[0]?.id]);
   function enterFocus() {
-    visit("personal-study");
+    visit(
+      timer?.room ??
+        (location === "observatory" ? "observatory" : "personal-study"),
+    );
     setFocusMode(true);
   }
   function focusQuestNow(id: string) {
     setFocusQuest(id);
-    visit("personal-study");
+    visit(
+      state?.quests.find((q) => q.id === id)?.room === "observatory"
+        ? "observatory"
+        : "personal-study",
+    );
     open("focus");
   }
   function interact(id: Interaction) {
+    if (location === "observatory") {
+      if (id === "workstation") {
+        open("sessions");
+        return;
+      }
+      if (id === "science-journal") {
+        open("observations");
+        return;
+      }
+      if (id === "science-charts") {
+        open("sessions");
+        return;
+      }
+    }
     if (id === "cafe-menu" || id === "cafe-gifts") {
       open("shop");
       return;
@@ -467,7 +501,7 @@ export default function App() {
 
   return (
     <div
-      className={`app ${location === "university" ? "cinematic-app" : ""} ${motion.reduced ? "reduced-motion" : ""} ${ambient ? "ambient-view" : ""} ${focusMode ? "study-focus-mode" : ""} ${location === "personal-study" ? "study-room" : location === "happy-cafe" ? "cafe-room" : ""}`}
+      className={`app ${location === "university" ? "cinematic-app" : ""} ${motion.reduced ? "reduced-motion" : ""} ${ambient ? "ambient-view" : ""} ${focusMode ? "study-focus-mode" : ""} ${location === "personal-study" ? "study-room" : location === "happy-cafe" ? "cafe-room" : location === "observatory" ? "observatory-room" : ""}`}
     >
       <a
         className="skip-link"
@@ -589,6 +623,18 @@ export default function App() {
             />
           </Suspense>
         )}
+        {location === "observatory" && !tab && (
+          <div className="observatory-shortcuts">
+            <button onClick={() => open("sessions")}>
+              Scientific activity
+            </button>
+            <button onClick={() => open("observations")}>
+              Observation journal
+            </button>
+            <button onClick={() => open("focus")}>Focus timer</button>
+            <small>Illustrative displays · no live observations</small>
+          </div>
+        )}
         {location === "happy-cafe" && !tab && (
           <div className="cafe-shortcuts">
             <button onClick={() => open("shop")}>
@@ -616,29 +662,34 @@ export default function App() {
         {location === "personal-study" && state && (
           <StudyClock state={state} now={now} open={() => open("focus")} />
         )}
-        {location === "personal-study" && state && !tab && (
-          <section className="study-focus-strip" aria-label="Focus session">
-            <div>
-              {state.focus?.current?.questId && (
-                <span className="focus-quest-title">
-                  {state.quests.find(
-                    (q) => q.id === state.focus?.current?.questId,
-                  )?.title ?? "Your focus quest"}
-                </span>
-              )}
-              <strong>
-                {state.focus?.current?.objective || "A study of your own"}
-              </strong>
-              <FocusControls state={state} act={act} busy={busy} now={now} />
-            </div>
-            <button onClick={() => open("focus")}>Focus controls</button>
-            <button
-              onClick={() => (focusMode ? setFocusMode(false) : enterFocus())}
-            >
-              {focusMode ? "Exit Focus Mode" : "Focus Mode"}
-            </button>
-          </section>
-        )}
+        {(location === "personal-study" ||
+          (location === "observatory" &&
+            state?.focus?.current?.room === "observatory" &&
+            (state.focus.current.status !== "ready" || focusMode))) &&
+          state &&
+          !tab && (
+            <section className="study-focus-strip" aria-label="Focus session">
+              <div>
+                {state.focus?.current?.questId && (
+                  <span className="focus-quest-title">
+                    {state.quests.find(
+                      (q) => q.id === state.focus?.current?.questId,
+                    )?.title ?? "Your focus quest"}
+                  </span>
+                )}
+                <strong>
+                  {state.focus?.current?.objective || "A study of your own"}
+                </strong>
+                <FocusControls state={state} act={act} busy={busy} now={now} />
+              </div>
+              <button onClick={() => open("focus")}>Focus controls</button>
+              <button
+                onClick={() => (focusMode ? setFocusMode(false) : enterFocus())}
+              >
+                {focusMode ? "Exit Focus Mode" : "Focus Mode"}
+              </button>
+            </section>
+          )}
         <section
           className={`rpg-hud ${celebration ? "has-earned" : ""}`}
           aria-label="Your progress"
@@ -685,13 +736,15 @@ export default function App() {
               <strong>{currentSession.title}</strong>
               <span>
                 {timeLabel(clock.elapsedMs)}
-                {currentSession.targetMinutes
+                {currentSession.targetMinutes &&
+                currentSession.room !== "observatory"
                   ? ` / ${currentSession.targetMinutes}:00`
                   : ""}{" "}
                 ·{" "}
                 {currentSession.phase === "paused"
                   ? "Paused"
                   : currentSession.targetMinutes &&
+                      currentSession.room !== "observatory" &&
                       clock.elapsedMs >= currentSession.targetMinutes * 60000
                     ? "Focus time reached — finish whenever you’re ready"
                     : "At your own pace"}
@@ -799,17 +852,30 @@ export default function App() {
                     Retry
                   </button>
                 </p>
+              ) : tab === "observations" ? (
+                <ObservationJournal
+                  state={state}
+                  busy={busy}
+                  act={act}
+                  projects={() => open("curriculum")}
+                />
               ) : tab === "focus" ? (
                 <FocusPage
                   state={state}
                   busy={busy}
                   act={act}
                   now={now}
+                  room={
+                    location === "observatory"
+                      ? "observatory"
+                      : "personal-study"
+                  }
                   selected={focusQuest}
                   enter={enterFocus}
                 />
               ) : tab === "sessions" ? (
                 <SessionPage
+                  room={location !== "university" ? location : undefined}
                   state={state}
                   busy={busy}
                   act={act}
@@ -819,6 +885,7 @@ export default function App() {
                 />
               ) : tab === "curriculum" ? (
                 <CurriculumPage
+                  room={location === "observatory" ? "observatory" : undefined}
                   state={state}
                   busy={busy}
                   act={act}
@@ -1116,6 +1183,10 @@ export default function App() {
       />
       <EditorDialog
         editor={editor}
+        courses={state?.courses}
+        defaultRoom={
+          location === "observatory" ? "observatory" : "personal-study"
+        }
         busy={busy}
         error={error}
         close={() => setEditor(null)}

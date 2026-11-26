@@ -1,3 +1,4 @@
+import { scienceKinds } from "./science";
 import type { Quest } from "./model";
 import { validRoom } from "./sessions";
 export const starterQuests = (): Quest[] => [
@@ -61,6 +62,15 @@ export function questDetails(input: Record<string, unknown>): Partial<Quest> {
         throw Error(`Invalid quest ${key}.`);
       result[key] = input[key];
     }
+  if (input.courseId !== undefined) {
+    if (
+      typeof input.courseId !== "string" ||
+      !input.courseId ||
+      input.courseId.length > 128
+    )
+      throw Error("Invalid quest project.");
+    result.courseId = input.courseId;
+  }
   if (input.priority !== undefined) {
     if (!["low", "normal", "high"].includes(String(input.priority)))
       throw Error("Invalid quest priority.");
@@ -73,6 +83,7 @@ export function questDetails(input: Record<string, unknown>): Partial<Quest> {
   if (input.activity !== undefined) {
     if (
       ![
+        ...scienceKinds,
         "system-design",
         "ai-engineering",
         "outreach",

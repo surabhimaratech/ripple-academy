@@ -541,6 +541,42 @@
           "group": "cafe-counter"
         }
       ]
+    },
+    {
+      "id": "observatory-telescope",
+      "src": "/art/heroine/observatory-telescope-v1.png",
+      "columns": 2,
+      "rows": 2,
+      "frames": [
+        {
+          "name": "obs-observe-a",
+          "row": 0,
+          "column": 0,
+          "height": 112,
+          "group": "observatory-telescope"
+        },
+        {
+          "name": "obs-observe-b",
+          "row": 0,
+          "column": 1,
+          "height": 112,
+          "group": "observatory-telescope"
+        },
+        {
+          "name": "obs-adjust-a",
+          "row": 1,
+          "column": 0,
+          "height": 112,
+          "group": "observatory-telescope"
+        },
+        {
+          "name": "obs-adjust-b",
+          "row": 1,
+          "column": 1,
+          "height": 112,
+          "group": "observatory-telescope"
+        }
+      ]
     }
   ],
   "clips": {
@@ -646,6 +682,20 @@
       "frames": [
         "cafe-order-a",
         "cafe-order-b"
+      ],
+      "frameMs": 1500
+    },
+    "observatory-observation": {
+      "frames": [
+        "obs-observe-a",
+        "obs-observe-b"
+      ],
+      "frameMs": 2000
+    },
+    "observatory-adjustment": {
+      "frames": [
+        "obs-adjust-a",
+        "obs-adjust-b"
       ],
       "frameMs": 1500
     }

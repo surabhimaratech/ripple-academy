@@ -1,3 +1,4 @@
+import { scienceActivity, scienceIntent } from "../domain/science";
 import type { ActivitySession } from "../domain/sessions";
 import type { RoomDefinition } from "./rooms";
 /** Mirror explicit activity intent while honoring the saved category's chosen room. */
@@ -6,6 +7,17 @@ export function sessionPlan(
   session: ActivitySession | undefined,
 ) {
   if (!session || session.room !== room.id) return undefined;
+  if (room.id === "observatory")
+    return {
+      activity:
+        session.categoryId === "astronomy"
+          ? "telescope"
+          : scienceActivity(
+              scienceIntent(`${session.categoryId} ${session.title}`),
+            ),
+      variations: [],
+      intro: undefined,
+    };
   const intent = `${session.categoryId} ${session.title}`.toLowerCase();
   const writing = /journal|writing|notebook|research notes/.test(intent);
   const reading = /reading|literature|history/.test(intent);

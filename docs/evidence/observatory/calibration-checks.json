@@ -1,0 +1,42 @@
+{
+  "viewports": {
+    "1440x900": [
+      "Room: The Observatory · Activity: observatory-arrive · State: observing · Facing: up · Scale: 2.46 · Contact: floor:observe · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: telescope · State: observing · Facing: right · Scale: 2.15 · Contact: obs-telescope · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: telescope-adjustment · State: observing · Facing: right · Scale: 2.15 · Contact: obs-telescope · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: observatory-code · State: writing · Facing: up · Scale: 1.85 · Contact: obs-desk · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: observatory-think · State: writing · Facing: up · Scale: 1.85 · Contact: obs-desk · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: charts · State: writing · Facing: up · Scale: 1.85 · Contact: obs-desk · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: galaxy-chart · State: observing · Facing: up · Scale: 1.85 · Contact: obs-desk · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: celestial-charts · State: observing · Facing: up · Scale: 2.11 · Contact: floor:browse · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: astronomy-books · State: reading · Facing: up · Scale: 2.18 · Contact: floor:read · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: lunar-globe · State: observing · Facing: up · Scale: 2.29 · Contact: floor:examine · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: observatory-chest · State: observing · Facing: up · Scale: 2.31 · Contact: floor:examine · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: armillary · State: observing · Facing: up · Scale: 2.28 · Contact: floor:examine · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: journal-table · State: observing · Facing: up · Scale: 2.34 · Contact: floor:examine · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: observatory-read · State: reading · Facing: down · Scale: 2.10 · Contact: obs-armchair · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: observatory-rest · State: sitting · Facing: down · Scale: 2.10 · Contact: obs-armchair · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: sky · State: observing · Facing: up · Scale: 2.08 · Contact: floor:observe · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: observatory-leave · State: idle · Facing: up · Scale: 2.46 · Contact: floor:idle · Transition: none · Blend: settled"
+    ],
+    "1366x768": [
+      "Room: The Observatory · Activity: observatory-arrive · State: observing · Facing: up · Scale: 2.46 · Contact: floor:observe · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: telescope · State: observing · Facing: right · Scale: 2.15 · Contact: obs-telescope · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: telescope-adjustment · State: observing · Facing: right · Scale: 2.15 · Contact: obs-telescope · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: observatory-code · State: writing · Facing: up · Scale: 1.85 · Contact: obs-desk · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: observatory-think · State: writing · Facing: up · Scale: 1.85 · Contact: obs-desk · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: charts · State: writing · Facing: up · Scale: 1.85 · Contact: obs-desk · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: galaxy-chart · State: observing · Facing: up · Scale: 1.85 · Contact: obs-desk · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: celestial-charts · State: observing · Facing: up · Scale: 2.11 · Contact: floor:browse · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: astronomy-books · State: reading · Facing: up · Scale: 2.18 · Contact: floor:read · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: lunar-globe · State: observing · Facing: up · Scale: 2.29 · Contact: floor:examine · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: observatory-chest · State: observing · Facing: up · Scale: 2.31 · Contact: floor:examine · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: armillary · State: observing · Facing: up · Scale: 2.28 · Contact: floor:examine · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: journal-table · State: observing · Facing: up · Scale: 2.34 · Contact: floor:examine · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: observatory-read · State: reading · Facing: down · Scale: 2.10 · Contact: obs-armchair · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: observatory-rest · State: sitting · Facing: down · Scale: 2.10 · Contact: obs-armchair · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: sky · State: observing · Facing: up · Scale: 2.08 · Contact: floor:observe · Transition: none · Blend: settled",
+      "Room: The Observatory · Activity: observatory-leave · State: idle · Facing: up · Scale: 2.46 · Contact: floor:idle · Transition: none · Blend: settled"
+    ]
+  }
+}

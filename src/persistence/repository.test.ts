@@ -277,3 +277,90 @@ it("racing Enjoyed and cancellation serialize to one mutually exclusive outcome"
   await a.close();
   await b.close();
 });
+
+it("persists science context, journal associations and existing rewards across reopen and recovery", async () => {
+  const name = crypto.randomUUID();
+  let r = new Repository(name);
+  await r.restore(legacyState());
+  await r.transact({
+    type: "saveCourse",
+    course: {
+      id: "project",
+      title: "My experiment",
+      subject: "Astronomy",
+      room: "observatory",
+      description: "A user project",
+      active: true,
+    },
+  });
+  await r.transact({
+    type: "startSession",
+    id: "science",
+    runId: "r",
+    categoryId: "science-data-analysis",
+    courseId: "project",
+    objective: "My objective",
+    experiment: "Local measurements",
+    targetMinutes: 25,
+  });
+  await r.transact({
+    type: "saveDiscovery",
+    discovery: {
+      id: "observation",
+      title: "My notes",
+      body: "User recorded",
+      at: new Date().toISOString(),
+      observation: {
+        observedAt: new Date().toISOString(),
+        category: "data-analysis",
+        sessionId: "science",
+        courseId: "project",
+        results: "3 samples",
+        localReference: "/example/data.csv",
+      },
+    },
+  });
+  await r.close();
+  r = new Repository(name);
+  const saved = await r.transact();
+  expect(saved.focus?.current).toMatchObject({
+    room: "observatory",
+    sessionId: "science",
+    courseId: "project",
+    objective: "My objective",
+  });
+  expect(saved.discoveries?.[0].observation).toMatchObject({
+    sessionId: "science",
+    courseId: "project",
+    results: "3 samples",
+  });
+  expect([saved.xp, saved.gold, saved.history]).toEqual([0, 0, []]);
+  await expect(
+    r.transact({
+      type: "startSession",
+      id: "second",
+      runId: "r2",
+      categoryId: "science-stargazing",
+      targetMinutes: 25,
+    }),
+  ).rejects.toThrow();
+  expect(await r.transact()).toEqual(saved);
+  await expect(
+    r.restore({
+      ...saved,
+      discoveries: [
+        {
+          ...saved.discoveries![0],
+          observation: {
+            ...saved.discoveries![0].observation,
+            sourceUrl: "javascript:alert(1)",
+          },
+        },
+      ],
+    }),
+  ).rejects.toThrow();
+  expect(await r.transact()).toEqual(saved);
+  await r.restore({ ...saved, gold: 20 });
+  expect(await r.recover()).toEqual(saved);
+  await r.close();
+});

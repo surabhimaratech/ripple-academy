@@ -19,3 +19,7 @@ User-supplied concept: `docs/art/references/happy-cafe-concept.png` (1672×941),
 - `public/art/heroine/cafe-counter-v1.png` — 1774×887 RGBA, 2×1 counter-facing standing gestures, preserving the standing satchel.
 
 All 62 pre-existing heroine frames and their clip definitions remain unchanged. Four frames are added (66 total); existing walking, sitting, reading, tea and transition art is reused. Source atlas frames are registered to the existing 96×144 canvas and (48,136) foot anchor. Source PNG alpha is preserved; runtime trimming removes only transparent gutters/specks. The room uses nearest-neighbor rendering. Exact display dimensions, bottom-center origins, foreground fractions, depth order and interaction coordinates are documented in `docs/HAPPY-CAFE.md` and defined in `src/game/cafe.ts`.
+
+## Observatory (Milestone 2.6)
+
+Approved source `docs/art/references/observatory-concept.png` (1670×941) was supplied by the user. Runtime architecture, independent sky, complete furniture/prop atlases and four compatible telescope heroine variants were created using the **built-in image_gen tool**, preserving that reference and the approved heroine identity. No external asset packs or paid runtime service was introduced. See [exact prompts](art/OBSERVATORY-PROMPTS.json) and [dimensions, origins, depth, crop masks and remaining table-writing artwork](OBSERVATORY.md). The source is preserved for reference; redistribution rights beyond this supplied project are not inferred. All previous66 heroine frames, existing room PNGs and clip definitions are retained.

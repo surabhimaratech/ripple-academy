@@ -29,3 +29,5 @@ Required entry fields: `title`, `objective`, `category` (nonempty strings, maxim
 Suggested rewards: small 3–5 XP / 1 gold; standard 8–10 / 2–3; substantial 12–15 / 4–5; major 20–25 / 6–8. Rewards remain configurable. Rest and essential self-care never require gold.
 
 Machine-readable [JSON Schema](quest-collection.schema.json) and [ready-to-import example](quest-collection.example.json) are included. Runtime validation additionally rejects duplicate IDs and whitespace-only required text.
+
+Observatory quests may also use `stargazing`, `astronomy-learning`, `data-analysis`, `scientific-programming`, `experiment` or `observation` as their activity. Optional `courseId` links an existing Curriculum scientific project; ungrouped quests remain valid. The version1 collection format is unchanged.

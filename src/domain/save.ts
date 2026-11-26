@@ -1,3 +1,4 @@
+import { observationDetails, sessionDetails } from "./science";
 import { rewardKinds, type RewardKind } from "./rewards";
 import { validateFocus } from "./focus";
 import { questDetails } from "./questDetails";
@@ -148,6 +149,9 @@ export function validateSave(input: unknown): State {
         id: id(d.id),
         title: text(d.title, "discovery title"),
         body: d.body,
+        ...(d.observation !== undefined
+          ? { observation: observationDetails(d.observation) }
+          : {}),
         at: date(d.at),
       };
     });
@@ -203,6 +207,7 @@ export function validateSave(input: unknown): State {
         elapsedMs: number(x.elapsedMs, "session time", 0, 31536000000),
         runId: id(x.runId),
         startedAt: date(x.startedAt),
+        ...sessionDetails(x),
       };
       if (x.questId !== undefined) value.questId = id(x.questId);
       if (x.courseId !== undefined) value.courseId = id(x.courseId);

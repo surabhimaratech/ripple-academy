@@ -1,3 +1,4 @@
+import { scienceCategories, sessionDetails } from "./science";
 import type { State } from "./model";
 export type Interior =
   "grand-library" | "personal-study" | "observatory" | "happy-cafe";
@@ -35,6 +36,8 @@ export interface ActivitySession {
   startedAt: string;
   finishedAt?: string;
   targetMinutes?: number;
+  objective?: string;
+  experiment?: string;
   notes?: string;
 }
 export const defaultCategories: ActivityCategory[] = [
@@ -46,6 +49,7 @@ export const defaultCategories: ActivityCategory[] = [
   { id: "history", title: "History", room: "grand-library" },
   { id: "astronomy", title: "Astronomy", room: "observatory" },
   { id: "physics", title: "Physics", room: "observatory" },
+  ...scienceCategories,
 ];
 export function categories(s: State) {
   return s.categories ?? defaultCategories;
@@ -74,6 +78,8 @@ export type SessionAction =
       questId?: string;
       courseId?: string;
       targetMinutes?: number;
+      objective?: string;
+      experiment?: string;
       runId: string;
     }
   | {
@@ -173,6 +179,7 @@ export function reduceSessions(
         runId: a.runId,
         startedAt: at,
         targetMinutes: a.targetMinutes,
+        ...sessionDetails(a as unknown as Record<string, unknown>),
       },
       ...(s.sessions ?? []),
     ];

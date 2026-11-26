@@ -1,3 +1,5 @@
+import type { Interior } from "../domain/sessions";
+import { scienceKinds, scienceLabels } from "../domain/science";
 import { useEffect, useState } from "react";
 import {
   defaultFocus,
@@ -104,15 +106,19 @@ export function FocusPage({
   busy,
   now,
   selected,
+  room,
   enter,
-}: { selected?: string; enter: () => void } & Props) {
+}: { selected?: string; room?: Interior; enter: () => void } & Props) {
   const f = state.focus ?? defaultFocus();
   const c = f.current;
   const [questId, setQuestId] = useState(selected ?? c?.questId ?? "");
   const [activity, setActivity] = useState<FocusActivity>(
     state.quests.find((q) => q.id === selected)?.activity ??
-      c?.activity ??
-      "ai-engineering",
+      (c?.room === room && c
+        ? c.activity
+        : room === "observatory"
+          ? "data-analysis"
+          : (c?.activity ?? "ai-engineering")),
   );
   const [objective, setObjective] = useState("");
   useEffect(() => {
@@ -120,12 +126,23 @@ export function FocusPage({
       setQuestId(selected);
       setActivity(
         state.quests.find((q) => q.id === selected)?.activity ??
-          "ai-engineering",
+          (room === "observatory" ? "data-analysis" : "ai-engineering"),
       );
     }
   }, [selected]);
   async function start(phase: FocusPhase) {
     const q = state.quests.find((q) => q.id === questId);
+    const targetRoom = q?.room
+      ? q.room === "observatory"
+        ? "observatory"
+        : "personal-study"
+      : (room ?? "personal-study");
+    const linkedSession =
+      targetRoom === "observatory"
+        ? state.sessions?.find(
+            (s) => s.room === "observatory" && s.phase !== "finished",
+          )
+        : undefined;
     await act(
       {
         type: "focusStart",
@@ -135,6 +152,9 @@ export function FocusPage({
         questId: q?.id,
         objective: q?.objective ?? q?.title ?? objective,
         activity,
+        room: targetRoom,
+        sessionId: linkedSession?.id,
+        courseId: q?.courseId ?? linkedSession?.courseId,
       },
       phase === "focus"
         ? "A little space to concentrate."
@@ -163,7 +183,7 @@ export function FocusPage({
               setQuestId(e.target.value);
               setActivity(
                 state.quests.find((q) => q.id === e.target.value)?.activity ??
-                  "ai-engineering",
+                  (room === "observatory" ? "data-analysis" : "ai-engineering"),
               );
             }}
           >
@@ -193,7 +213,10 @@ export function FocusPage({
             value={activity}
             onChange={(e) => setActivity(e.target.value as FocusActivity)}
           >
-            {focusActivities.map((a) => (
+            {[
+              ...focusActivities,
+              ...scienceKinds.map((k) => ({ id: k, label: scienceLabels[k] })),
+            ].map((a) => (
               <option key={a.id} value={a.id}>
                 {a.label}
               </option>

@@ -22,6 +22,14 @@ export function heroineFrame(p: HeroinePose, reduced: boolean): string {
   if (p.moving)
     return reduced ? `idle-${p.facing}` : clip(`walk-${p.facing}`, p.clock);
   if (p.engaged) {
+    if (p.activityId === "telescope-adjustment")
+      return reduced
+        ? "obs-adjust-a"
+        : p.activityTime % 3 < 1.5
+          ? "obs-adjust-a"
+          : "obs-adjust-b";
+    if (p.activityId === "observatory-think" || p.activityId === "galaxy-chart")
+      return "think-work";
     if (p.activityId === "telescope")
       return telescopeSample(p.activityTime, reduced).frame;
     if (p.pose === "code") return workSample(p.activityTime, reduced).frame;

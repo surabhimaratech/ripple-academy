@@ -1,3 +1,4 @@
+import { observatoryFurniture } from "./observatory";
 import { cafeSeat } from "./cafe";
 import type { Point, Obstacle } from "./movement";
 export type Polygon = Point[];
@@ -108,6 +109,17 @@ export const windowVantage = {
   mode: "seated" as const,
 };
 export function furnitureForActivity(id?: string) {
+  if (
+    [
+      "observatory-code",
+      "observatory-think",
+      "charts",
+      "galaxy-chart",
+    ].includes(id ?? "")
+  )
+    return observatoryFurniture.desk;
+  if (["observatory-read", "observatory-rest"].includes(id ?? ""))
+    return observatoryFurniture.armchair;
   if (
     [
       "cafe-drink",

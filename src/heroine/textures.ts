@@ -1,6 +1,7 @@
 import type Phaser from "phaser";
 import { heroine, validateHeroineManifest } from "./assets";
 import {
+  groundContactX,
   atlasCell,
   silhouetteBounds,
   registeredFrames,
@@ -32,6 +33,7 @@ export function createHeroineTextures(scene: Phaser.Scene) {
         height: number;
         canvas: HTMLCanvasElement;
         bounds: Rect;
+        groundX?: number;
       }[]
     >();
     for (const f of atlas.frames) {
@@ -66,7 +68,21 @@ export function createHeroineTextures(scene: Phaser.Scene) {
         cell.height,
       );
       const entries = groups.get(f.group) ?? [];
-      entries.push({ name: key, height: f.height, canvas: scratch, bounds });
+      entries.push({
+        name: key,
+        height: f.height,
+        canvas: scratch,
+        bounds,
+        ...(atlas.id === "observatory-telescope"
+          ? {
+              groundX: groundContactX(
+                ctx.getImageData(0, 0, cell.width, cell.height).data,
+                cell.width,
+                bounds,
+              ),
+            }
+          : {}),
+      });
       groups.set(f.group, entries);
     }
     for (const entries of groups.values()) {
@@ -74,6 +90,9 @@ export function createHeroineTextures(scene: Phaser.Scene) {
         entries.map((f) => f.bounds),
         entries[0].height,
         heroine.canvas,
+        entries.every((f) => f.groundX !== undefined)
+          ? entries.map((f) => f.groundX!)
+          : undefined,
       );
       entries.forEach((f, i) => {
         const canvas = document.createElement("canvas");

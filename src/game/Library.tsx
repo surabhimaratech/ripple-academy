@@ -107,6 +107,14 @@ class GrandLibrary extends Phaser.Scene {
       discovery: "Bookshelves · study & research",
       chair: "Armchair · a freely chosen break",
       window: "Window · reflection",
+      "science-journal": "Observation journal · your notes and experiments",
+      "science-charts": "Celestial charts · astronomy activities",
+      "lunar-globe": "Lunar globe · examine its surface",
+      armillary: "Armillary sphere · examine celestial geometry",
+      globe:
+        this.definition.id === "observatory"
+          ? "Telescope · observe through the eyepiece"
+          : "Globe · explore",
       "cafe-menu": "Happy Café · browse rewards",
       "cafe-gifts": "Books & gifts · browse rewards",
     };
@@ -118,7 +126,8 @@ class GrandLibrary extends Phaser.Scene {
         .on("pointerover", () => {
           if (
             (this.definition.id === "personal-study" ||
-              this.definition.id === "happy-cafe") &&
+              this.definition.id === "happy-cafe" ||
+              this.definition.id === "observatory") &&
             !this.blocked
           ) {
             this.game.events.emit("room-prompt", labels[hit.id] ?? "Explore");
@@ -321,11 +330,20 @@ class GrandLibrary extends Phaser.Scene {
         this.behavior.state,
       );
     const activityLabel =
-      engaged && this.behavior.pose === "code"
-        ? workSample(this.behavior.engaged, this.reduced).label
-        : engaged && this.behavior.activity?.id === "telescope"
-          ? telescopeSample(this.behavior.engaged, this.reduced).label
-          : this.behavior.label;
+      engaged &&
+      (this.behavior.activity?.id === "observatory-think" ||
+        this.behavior.activity?.id === "galaxy-chart")
+        ? this.behavior.activity.label
+        : engaged && this.behavior.pose === "code"
+          ? workSample(this.behavior.engaged, this.reduced).label.replace(
+              "her laptop",
+              this.definition.id === "observatory"
+                ? "the scientific workstation"
+                : "her laptop",
+            )
+          : engaged && this.behavior.activity?.id === "telescope"
+            ? telescopeSample(this.behavior.engaged, this.reduced).label
+            : this.behavior.label;
     const status = {
       label:
         this.definition.id === "happy-cafe" && this.behavior.settling > 0

@@ -1,7 +1,14 @@
+import { validRoom, type Interior } from "./sessions";
+import { scienceKinds, type ScienceKind } from "./science";
 /** Wall-clock Pomodoro, deliberately independent of activity-session accounting and rewards. */
 export type FocusPhase = "focus" | "short-break" | "long-break";
 export type FocusActivity =
-  "system-design" | "ai-engineering" | "outreach" | "reading" | "writing";
+  | ScienceKind
+  | "system-design"
+  | "ai-engineering"
+  | "outreach"
+  | "reading"
+  | "writing";
 export interface FocusSettings {
   focus: number;
   "short-break": number;
@@ -20,6 +27,9 @@ export interface FocusSegment {
   questId?: string;
   objective: string;
   activity: FocusActivity;
+  room?: Interior;
+  sessionId?: string;
+  courseId?: string;
 }
 export interface FocusRecord {
   id: string;
@@ -28,6 +38,10 @@ export interface FocusRecord {
   endedAt: number;
   questId?: string;
   objective: string;
+  room?: Interior;
+  sessionId?: string;
+  courseId?: string;
+  activity?: FocusActivity;
 }
 export interface FocusState {
   settings: FocusSettings;
@@ -44,11 +58,16 @@ export type FocusAction =
       questId?: string;
       objective: string;
       activity: FocusActivity;
+      room?: Interior;
+      sessionId?: string;
+      courseId?: string;
+      durationMinutes?: number;
     }
   | {
       type: "focusPause" | "focusResume" | "focusReset" | "focusTick";
       id: string;
       now: number;
+      sessionElapsedMs?: number;
     }
   | { type: "focusSettings"; settings: FocusSettings };
 export const defaultFocus = (): FocusState => ({
@@ -127,6 +146,7 @@ export function validateFocus(input: unknown): FocusState {
       !integer(c.remainingMs, 0, c.durationMs) ||
       !text(c.objective) ||
       ![
+        ...scienceKinds,
         "system-design",
         "ai-engineering",
         "outreach",
@@ -140,6 +160,29 @@ export function validateFocus(input: unknown): FocusState {
       (c.status !== "running" && c.deadline !== undefined))
   )
     throw Error("Invalid active focus timer.");
+  for (const context of [...f.history, ...(c ? [c] : [])]) {
+    if (
+      "activity" in context &&
+      context.activity !== undefined &&
+      ![
+        ...scienceKinds,
+        "system-design",
+        "ai-engineering",
+        "outreach",
+        "reading",
+        "writing",
+      ].includes(context.activity)
+    )
+      throw Error("Invalid focus activity.");
+    if (context.room !== undefined && !validRoom(context.room))
+      throw Error("Invalid focus room.");
+    for (const key of ["sessionId", "courseId"] as const)
+      if (
+        context[key] !== undefined &&
+        (!text(context[key], 128) || !context[key])
+      )
+        throw Error("Invalid focus link.");
+  }
   return f;
 }
 export function reduceFocus(
@@ -157,13 +200,27 @@ export function reduceFocus(
   if (action.type === "focusStart") {
     if (c && c.status !== "ready")
       throw Error("Reset the current timer before starting another.");
+    if (
+      action.durationMinutes !== undefined &&
+      (!Number.isInteger(action.durationMinutes) ||
+        action.durationMinutes < 1 ||
+        action.durationMinutes > 240)
+    )
+      throw Error("Focus duration must be 1–240 minutes.");
+    const duration =
+      (action.durationMinutes ?? f.settings[action.phase]) * 60000;
     f.current = {
+      ...(action.room !== undefined ? { room: action.room } : {}),
+      ...(action.sessionId !== undefined
+        ? { sessionId: action.sessionId }
+        : {}),
+      ...(action.courseId !== undefined ? { courseId: action.courseId } : {}),
       id: action.id,
       phase: action.phase,
       status: "running",
-      durationMs: f.settings[action.phase] * 60000,
-      remainingMs: f.settings[action.phase] * 60000,
-      deadline: action.now + f.settings[action.phase] * 60000,
+      durationMs: duration,
+      remainingMs: duration,
+      deadline: action.now + duration,
       startedAt: action.now,
       questId: action.questId,
       objective: action.objective.trim().slice(0, 120),
@@ -178,6 +235,10 @@ export function reduceFocus(
         endedAt: c.deadline!,
         questId: c.questId,
         objective: c.objective,
+        ...(c.room ? { room: c.room } : {}),
+        ...(c.room === "observatory" ? { activity: c.activity } : {}),
+        ...(c.sessionId ? { sessionId: c.sessionId } : {}),
+        ...(c.courseId ? { courseId: c.courseId } : {}),
       });
       if (c.phase === "focus") f.cycles++;
       const next: FocusPhase =

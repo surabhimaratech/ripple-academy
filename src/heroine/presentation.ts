@@ -1,3 +1,4 @@
+import { observatoryFloorScale, telescopeContact } from "../game/observatory";
 import { cafeFloorScale } from "../game/cafe";
 import {
   furnitureForActivity,
@@ -72,13 +73,17 @@ export function placementFor(
         ? studyFloorScale(b.position.y)
         : room === "happy-cafe"
           ? cafeFloorScale(b.position.y)
-          : 1,
+          : room === "observatory"
+            ? observatoryFloorScale(b.position.y)
+            : 1,
     depth: b.position.y,
     key: "standing",
     occluders: [],
   };
   if (
-    (room === "personal-study" || room === "happy-cafe") &&
+    (room === "personal-study" ||
+      room === "happy-cafe" ||
+      room === "observatory") &&
     b.departingActivity &&
     b.departure
   ) {
@@ -94,7 +99,9 @@ export function placementFor(
   if (!engaged) return base;
   const id = b.activity!.id;
   const anchor =
-    (room === "personal-study" || room === "happy-cafe") &&
+    (room === "personal-study" ||
+      room === "happy-cafe" ||
+      room === "observatory") &&
     furnitureForActivity(id);
   if (anchor)
     return furniturePlacement(
@@ -107,6 +114,7 @@ export function placementFor(
   if (
     room !== "personal-study" &&
     room !== "happy-cafe" &&
+    room !== "observatory" &&
     (b.pose === "code" || b.pose === "write")
   ) {
     return {
@@ -122,11 +130,15 @@ export function placementFor(
     ["cafe-menu", "cafe-order", "cafe-wait"].includes(id)
   )
     return { ...base, key: "cafe-counter" };
-  if (id === "telescope")
-    return { x: 768, y: 446, depth: 483, key: "telescope", occluders: [] };
+  if (
+    room === "observatory" &&
+    ["telescope", "telescope-adjustment"].includes(id)
+  )
+    return { ...base, scale: telescopeContact.scale, key: "obs-telescope" };
   if (
     room !== "personal-study" &&
     room !== "happy-cafe" &&
+    room !== "observatory" &&
     (b.offsetY || b.pose === "tea")
   )
     return {
@@ -216,13 +228,17 @@ export function frameForPlacement(
     const { kind, progress, furniture } = p.transition;
     const t = kind === "arrive" ? progress : 1 - progress;
     const side =
-      furniture === "study-armchair" || furniture === "cafe-window-chair"
+      furniture === "study-armchair" ||
+      furniture === "cafe-window-chair" ||
+      furniture === "obs-armchair"
         ? "front"
         : "rear";
     if (t < 0.3) return `study-stand-${side}`;
     if (t < 0.8) return `study-bend-${side}`;
     if (kind === "leave")
-      return furniture === "study-armchair" || furniture === "cafe-window-chair"
+      return furniture === "study-armchair" ||
+        furniture === "cafe-window-chair" ||
+        furniture === "obs-armchair"
         ? "study-rest"
         : "study-think";
   }
@@ -242,6 +258,14 @@ export function frameForPlacement(
     activityTime % 20 > 14
   )
     return "study-rest-eyes";
+  if (p.key === "obs-telescope")
+    return frame.startsWith("obs-")
+      ? frame
+      : frame === "telescope-adjust"
+        ? "obs-adjust-a"
+        : frame === "telescope-b"
+          ? "obs-observe-b"
+          : "obs-observe-a";
   if (p.key === "cafe-counter")
     return !reduced && activityTime % 3 > 1.5 ? "cafe-order-b" : "cafe-order-a";
   if (p.key === "cafe-window-chair" && frame.startsWith("idle-"))
@@ -261,12 +285,20 @@ function furniturePlacement(
   const floor = kind === "arrive" ? anchor.approach : anchor.exit;
   const floorScale = anchor.id.startsWith("cafe-")
     ? cafeFloorScale(floor.y)
-    : studyFloorScale(floor.y);
+    : anchor.id.startsWith("obs-")
+      ? observatoryFloorScale(floor.y)
+      : studyFloorScale(floor.y);
   return {
     x: floor.x + (anchor.contact.x - floor.x) * ease,
     y: floor.y + (anchor.contact.y - floor.y) * ease,
     scale: floorScale + (anchor.scale - floorScale) * ease,
-    depth: anchor.id.startsWith("cafe-") ? anchor.contact.y : depth,
+    depth: anchor.id.startsWith("cafe-")
+      ? anchor.contact.y
+      : anchor.id === "obs-desk"
+        ? 570
+        : anchor.id === "obs-armchair"
+          ? 695
+          : depth,
     key: anchor.id,
     occluders: [],
     foreground: anchor.foreground,

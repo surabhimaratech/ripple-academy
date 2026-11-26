@@ -76,6 +76,10 @@ export const objects = [
   },
 ] as const;
 export type Interaction =
+  | "armillary"
+  | "science-journal"
+  | "science-charts"
+  | "lunar-globe"
   | "cafe-menu"
   | "cafe-gifts"
   | "workstation"

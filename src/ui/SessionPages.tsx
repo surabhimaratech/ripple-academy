@@ -1,3 +1,4 @@
+import { scienceCategories } from "../domain/science";
 import { SessionClock } from "../domain/sessionClock";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
@@ -53,11 +54,29 @@ type Props = {
   go: (room: Interior) => void;
   elapsed: number;
   finish: () => void;
+  room?: Interior;
 };
-export function SessionPage({ state, busy, act, go, elapsed, finish }: Props) {
+export function SessionPage({
+  state,
+  busy,
+  act,
+  go,
+  elapsed,
+  finish,
+  room,
+}: Props) {
   const [timer, setTimer] = useState(false);
   const catalog = categories(state),
     current = activeSession(state);
+  const [categoryId, setCategoryId] = useState(
+    room === "observatory"
+      ? catalog.some((c) => c.id === "science-data-analysis")
+        ? "science-data-analysis"
+        : "astronomy"
+      : (catalog[0]?.id ?? ""),
+  );
+  const scientific =
+    catalog.find((c) => c.id === categoryId)?.room === "observatory";
   async function start(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const data = new FormData(e.currentTarget),
@@ -69,6 +88,8 @@ export function SessionPage({ state, busy, act, go, elapsed, finish }: Props) {
         type: "startSession",
         id: crypto.randomUUID(),
         categoryId,
+        objective: String(data.get("objective") ?? "").trim() || undefined,
+        experiment: String(data.get("experiment") ?? "").trim() || undefined,
         runId: crypto.randomUUID(),
         questId: String(data.get("quest")) || undefined,
         courseId: String(data.get("course")) || undefined,
@@ -80,6 +101,20 @@ export function SessionPage({ state, busy, act, go, elapsed, finish }: Props) {
   }
   return (
     <div className="session-page">
+      {room === "observatory" &&
+        scienceCategories.some((c) => !catalog.some((x) => x.id === c.id)) && (
+          <button
+            disabled={busy}
+            onClick={() =>
+              void act(
+                { type: "addScienceCategories" },
+                "Scientific activities added without changing your categories.",
+              )
+            }
+          >
+            Add scientific activities
+          </button>
+        )}
       <p className="folio-intro">
         Choose what you’re doing in the real world. She will keep you company.
       </p>
@@ -89,6 +124,8 @@ export function SessionPage({ state, busy, act, go, elapsed, finish }: Props) {
             {current.phase === "paused" ? "PAUSED" : "IN PROGRESS"}
           </span>
           <h3>{current.title}</h3>
+          {current.objective && <p>{current.objective}</p>}
+          {current.experiment && <p>{current.experiment}</p>}
           <p>
             {timeLabel(elapsed)} · {roomNames[current.room]}
           </p>
@@ -130,12 +167,21 @@ export function SessionPage({ state, busy, act, go, elapsed, finish }: Props) {
         <form onSubmit={start}>
           <label>
             Real-world activity
-            <select name="category" required>
-              {catalog.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.title} · {roomNames[c.room]}
-                </option>
-              ))}
+            <select
+              name="category"
+              required
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+            >
+              {catalog
+                .filter(
+                  (c) => room !== "observatory" || c.room === "observatory",
+                )
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.title} · {roomNames[c.room]}
+                  </option>
+                ))}
             </select>
           </label>
           <label>
@@ -151,7 +197,7 @@ export function SessionPage({ state, busy, act, go, elapsed, finish }: Props) {
             </select>
           </label>
           <label>
-            Course (optional)
+            Course / project (optional)
             <select name="course">
               <option value="">No course</option>
               {state.courses
@@ -163,13 +209,23 @@ export function SessionPage({ state, busy, act, go, elapsed, finish }: Props) {
                 ))}
             </select>
           </label>
+          <label>
+            Objective (optional)
+            <input name="objective" maxLength={240} />
+          </label>
+          <label>
+            Project / experiment name (optional)
+            <input name="experiment" maxLength={240} />
+          </label>
           <label className="check-label">
             <input
               type="checkbox"
               checked={timer}
               onChange={(e) => setTimer(e.target.checked)}
             />
-            Use an optional focus timer
+            {scientific
+              ? "Use the existing Pomodoro timer"
+              : "Use an optional focus target"}
           </label>
           {timer && (
             <label>
@@ -178,7 +234,7 @@ export function SessionPage({ state, busy, act, go, elapsed, finish }: Props) {
                 name="minutes"
                 type="number"
                 min="1"
-                max="1440"
+                max={scientific ? 240 : 1440}
                 step="1"
                 required
                 defaultValue={25}
@@ -310,6 +366,8 @@ export function SessionPage({ state, busy, act, go, elapsed, finish }: Props) {
               <p>
                 {timeLabel(s.elapsedMs)} · {roomNames[s.room]}
               </p>
+              {s.objective && <p>{s.objective}</p>}
+              {s.experiment && <p>Project / experiment: {s.experiment}</p>}
               {s.notes && <p className="discovery-body">{s.notes}</p>}
             </article>
           ))
@@ -342,6 +400,7 @@ export function RoomSelect({
   );
 }
 export function CurriculumPage({
+  room,
   state,
   busy,
   act,
@@ -351,6 +410,7 @@ export function CurriculumPage({
   busy: boolean;
   act: Props["act"];
   go: Props["go"];
+  room?: Interior;
 }) {
   const [editing, setEditing] = useState<Course | null | undefined>(undefined);
   async function save(e: FormEvent<HTMLFormElement>) {
@@ -383,7 +443,7 @@ export function CurriculumPage({
       {editing !== undefined ? (
         <form onSubmit={save} key={editing?.id ?? "new"}>
           <label>
-            Course title
+            {room === "observatory" ? "Project title" : "Course title"}
             <input
               name="title"
               required
@@ -397,10 +457,15 @@ export function CurriculumPage({
               name="subject"
               required
               maxLength={120}
-              defaultValue={editing?.subject}
+              defaultValue={
+                editing?.subject ?? (room === "observatory" ? "Astronomy" : "")
+              }
             />
           </label>
-          <RoomSelect name="room" value={editing?.room ?? "grand-library"} />
+          <RoomSelect
+            name="room"
+            value={editing?.room ?? room ?? "grand-library"}
+          />
           <label>
             What would you like to explore?
             <textarea
@@ -416,11 +481,13 @@ export function CurriculumPage({
               type="checkbox"
               defaultChecked={editing?.active ?? true}
             />
-            Keep in current courses
+            {room === "observatory"
+              ? "Keep in current projects"
+              : "Keep in current courses"}
           </label>
           <div className="entry-actions">
             <button className="primary" disabled={busy}>
-              Save course
+              {room === "observatory" ? "Save project" : "Save course"}
             </button>
             <button
               type="button"
@@ -433,42 +500,68 @@ export function CurriculumPage({
         </form>
       ) : (
         <button className="primary" onClick={() => setEditing(null)}>
-          + Add a course
+          {room === "observatory"
+            ? "+ Add a scientific project"
+            : "+ Add a course"}
         </button>
       )}
-      {!state.courses?.length && editing === undefined && (
-        <p className="empty">A blank page for the things you want to learn.</p>
-      )}
-      {state.courses?.map((c) => (
-        <article className="entry" key={c.id}>
-          <span className="subject">
-            {c.subject} · {c.active ? "Current" : "Resting"}
-          </span>
-          <h3>{c.title}</h3>
-          <p className="discovery-body">{c.description}</p>
-          <button className="secondary" onClick={() => go(c.room)}>
-            Visit {roomNames[c.room]}
-          </button>
-          <div className="entry-actions">
-            <button className="text-button" onClick={() => setEditing(c)}>
-              Edit
+      {!state.courses?.some((c) => !room || c.room === room) &&
+        editing === undefined && (
+          <p className="empty">
+            A blank page for the things you want to learn.
+          </p>
+        )}
+      {state.courses
+        ?.filter((c) => !room || c.room === room)
+        .map((c) => (
+          <article className="entry" key={c.id}>
+            <span className="subject">
+              {c.subject} · {c.active ? "Current" : "Resting"}
+            </span>
+            <h3>{c.title}</h3>
+            {c.room === "observatory" && (
+              <p>
+                {state.quests.filter((q) => q.courseId === c.id).length} quests
+                ·{" "}
+                {
+                  (state.sessions ?? []).filter((s) => s.courseId === c.id)
+                    .length
+                }{" "}
+                sessions ·{" "}
+                {
+                  (state.discoveries ?? []).filter(
+                    (d) => d.observation?.courseId === c.id,
+                  ).length
+                }{" "}
+                observations
+              </p>
+            )}
+            <p className="discovery-body">{c.description}</p>
+            <button className="secondary" onClick={() => go(c.room)}>
+              Visit {roomNames[c.room]}
             </button>
-            <button
-              className="text-button"
-              disabled={busy}
-              onClick={() => {
-                if (confirm("Remove this course? Past sessions will be kept."))
-                  void act(
-                    { type: "deleteCourse", id: c.id },
-                    "Course removed.",
-                  );
-              }}
-            >
-              Remove
-            </button>
-          </div>
-        </article>
-      ))}
+            <div className="entry-actions">
+              <button className="text-button" onClick={() => setEditing(c)}>
+                Edit
+              </button>
+              <button
+                className="text-button"
+                disabled={busy}
+                onClick={() => {
+                  if (
+                    confirm("Remove this course? Past sessions will be kept.")
+                  )
+                    void act(
+                      { type: "deleteCourse", id: c.id },
+                      "Course removed.",
+                    );
+                }}
+              >
+                Remove
+              </button>
+            </div>
+          </article>
+        ))}
     </div>
   );
 }
@@ -543,7 +636,11 @@ export function FinishSessionDialog({
           </label>
           {session.questId && !questCompleted ? (
             <label className="check-label">
-              <input type="checkbox" name="complete" defaultChecked />
+              <input
+                type="checkbox"
+                name="complete"
+                defaultChecked={session.room !== "observatory"}
+              />
               Complete the associated real-world quest
             </label>
           ) : (

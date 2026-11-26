@@ -95,7 +95,13 @@
               "ai-engineering",
               "outreach",
               "reading",
-              "writing"
+              "writing",
+              "stargazing",
+              "astronomy-learning",
+              "data-analysis",
+              "scientific-programming",
+              "experiment",
+              "observation"
             ]
           },
           "xp": {
@@ -107,6 +113,11 @@
             "type": "integer",
             "minimum": 0,
             "maximum": 1000000
+          },
+          "courseId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
           }
         }
       }

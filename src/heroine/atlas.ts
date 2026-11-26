@@ -108,18 +108,47 @@ export function registeredFrames(
   bounds: Rect[],
   targetHeight: number,
   canvas: { width: number; height: number; footX: number; footY: number },
+  groundX?: number[],
 ): Rect[] {
   const left = Math.min(...bounds.map((b) => b.x)),
     right = Math.max(...bounds.map((b) => b.x + b.width));
   const scale = Math.min(
     targetHeight / Math.max(...bounds.map((b) => b.height)),
-    (canvas.width - 8) / (right - left),
+    (canvas.width - 8) /
+      (groundX
+        ? Math.max(...bounds.map((b, i) => groundX[i] - b.x)) +
+          Math.max(...bounds.map((b, i) => b.x + b.width - groundX[i]))
+        : right - left),
   );
   const center = (left + right) / 2;
-  return bounds.map((b) => ({
-    x: Math.round(canvas.footX + (b.x - center) * scale),
+  return bounds.map((b, i) => ({
+    x: Math.round(canvas.footX + (b.x - (groundX?.[i] ?? center)) * scale),
     y: canvas.footY - Math.round(b.height * scale),
     width: Math.round(b.width * scale),
     height: Math.round(b.height * scale),
   }));
+}
+
+/** Register newly authored standing frames by their boots, not the changing hand silhouette. */
+export function groundContactX(
+  rgba: Uint8ClampedArray,
+  width: number,
+  bounds: Rect,
+) {
+  let mass = 0,
+    sum = 0;
+  for (
+    let y = Math.floor(bounds.y + bounds.height * 0.92);
+    y < bounds.y + bounds.height;
+    y++
+  )
+    for (let x = bounds.x; x < bounds.x + bounds.width; x++) {
+      const alpha = rgba[(y * width + x) * 4 + 3];
+      if (alpha >= 128) {
+        mass += alpha;
+        sum += x * alpha;
+      }
+    }
+  if (!mass) throw Error("Sprite has no grounded foot contact.");
+  return sum / mass;
 }

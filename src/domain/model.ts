@@ -1,4 +1,10 @@
 import {
+  observationDetails,
+  scienceCategories,
+  scienceIntent,
+  type Observation,
+} from "./science";
+import {
   reduceRewards,
   type RewardAction,
   type RewardKind,
@@ -7,6 +13,7 @@ import {
 import { reduceFocus, type FocusState, type FocusAction } from "./focus";
 import { questDetails, starterQuests } from "./questDetails";
 import {
+  defaultCategories,
   reduceSessions,
   type SessionAction,
   type ActivityCategory,
@@ -28,6 +35,7 @@ export interface Quest {
   estimatedMinutes?: number;
   room?: import("./sessions").Interior;
   activity?: import("./focus").FocusActivity;
+  courseId?: string;
   completed?: { xp: number; gold: number; at: string };
 }
 export interface Reward {
@@ -47,6 +55,7 @@ export interface Redemption {
   at: string;
 }
 export interface Discovery {
+  observation?: Observation;
   id: string;
   title: string;
   body: string;
@@ -99,6 +108,7 @@ export function title(s: string) {
   return s.trim();
 }
 export type Action =
+  | { type: "addScienceCategories" }
   | RewardAction
   | SessionAction
   | FocusAction
@@ -119,13 +129,63 @@ export function apply(
   const s = structuredClone(state);
   reduceRewards(s, action as RewardAction, at);
   if (
+    action.type === "startSession" &&
+    state.sessions?.some((x) => x.id === action.id)
+  )
+    return s;
+  if (action.type === "addScienceCategories") {
+    const current = s.categories ?? defaultCategories;
+    s.categories = [
+      ...current,
+      ...scienceCategories.filter((c) => !current.some((x) => x.id === c.id)),
+    ];
+    return s;
+  }
+  if (
     action.type === "focusStart" &&
     action.questId &&
     !s.quests.some((q) => q.id === action.questId)
   )
     throw Error("This quest is no longer available.");
   if (action.type.startsWith("focus")) {
-    s.focus = reduceFocus(s.focus, action as FocusAction);
+    const focusAction = action as FocusAction;
+    s.focus = reduceFocus(s.focus, focusAction);
+    const linked = s.sessions?.find(
+      (x) => x.id === s.focus?.current?.sessionId && x.phase !== "finished",
+    );
+    if (
+      linked &&
+      focusAction.type === "focusPause" &&
+      s.focus.current?.id === focusAction.id &&
+      s.focus.current?.status === "paused"
+    )
+      reduceSessions(
+        s,
+        {
+          type: "pauseSession",
+          id: linked.id,
+          runId: linked.runId,
+          elapsedMs: focusAction.sessionElapsedMs ?? linked.elapsedMs,
+        },
+        at,
+        () => {},
+      );
+    if (
+      linked &&
+      focusAction.type === "focusResume" &&
+      s.focus.current?.id === focusAction.id &&
+      linked.phase === "paused"
+    )
+      reduceSessions(
+        s,
+        {
+          type: "resumeSession",
+          id: linked.id,
+          runId: `focus:${focusAction.id}:${focusAction.now}`,
+        },
+        at,
+        () => {},
+      );
     return s;
   }
   if (action.type === "importQuests") {
@@ -155,13 +215,65 @@ export function apply(
       s.gold += q.gold;
     }
   });
+  const sessionId = "id" in action ? action.id : undefined;
+  const scientificSession = s.sessions?.find(
+    (x) => x.id === sessionId && x.room === "observatory",
+  );
+  if (
+    action.type === "startSession" &&
+    scientificSession &&
+    action.targetMinutes !== undefined
+  ) {
+    s.focus = reduceFocus(s.focus, {
+      type: "focusStart",
+      id: `focus:${action.id}`,
+      now: Date.parse(at),
+      phase: "focus",
+      room: "observatory",
+      sessionId: action.id,
+      courseId: action.courseId,
+      objective: action.objective ?? scientificSession.title,
+      activity:
+        action.categoryId === "astronomy"
+          ? "stargazing"
+          : scienceIntent(`${action.categoryId} ${scientificSession.title}`),
+      durationMinutes: action.targetMinutes,
+      questId: action.questId,
+    });
+  }
+  if (
+    scientificSession &&
+    state.sessions?.some(
+      (x) => x.id === scientificSession.id && x.phase !== "finished",
+    ) &&
+    s.focus?.current?.sessionId === scientificSession.id &&
+    ["pauseSession", "resumeSession", "finishSession"].includes(action.type)
+  ) {
+    s.focus = reduceFocus(s.focus, {
+      type:
+        action.type === "pauseSession"
+          ? "focusPause"
+          : action.type === "resumeSession"
+            ? "focusResume"
+            : "focusReset",
+      id: s.focus.current.id,
+      now: Date.parse(at),
+    });
+  }
   // Keep earned mementos through undo; old saves derive them lazily.
   s.keepsakes = unlockedKeepsakes(s);
   if (action.type === "saveDiscovery") {
     const d = action.discovery;
     if (d.body.length > 10000)
       throw Error("Keep each discovery under 10,000 characters.");
-    const note = { ...d, title: title(d.title), at };
+    const note = {
+      ...d,
+      ...(d.observation !== undefined
+        ? { observation: observationDetails(d.observation) }
+        : {}),
+      title: title(d.title),
+      at,
+    };
     s.discoveries = (s.discoveries ?? []).some((x) => x.id === d.id)
       ? s.discoveries!.map((x) => (x.id === d.id ? note : x))
       : [note, ...(s.discoveries ?? [])];

@@ -1,3 +1,5 @@
+import type { Course } from "../domain/sessions";
+import { scienceKinds, scienceLabels } from "../domain/science";
 import { useEffect, useRef, type FormEvent } from "react";
 import type { Editor as EditorValue } from "./Folio";
 import type { FocusActivity } from "../domain/focus";
@@ -6,12 +8,16 @@ import type { RewardKind } from "../domain/rewards";
 import type { Action } from "../domain/model";
 export function EditorDialog({
   editor,
+  courses,
+  defaultRoom = "personal-study",
   busy,
   error,
   close,
   act,
 }: {
   editor: EditorValue | null;
+  courses?: Course[];
+  defaultRoom?: Interior;
   busy: boolean;
   error: string;
   close: () => void;
@@ -50,6 +56,7 @@ export function EditorDialog({
                 ? Number(f.get("estimatedMinutes"))
                 : undefined,
               room: String(f.get("room")) as Interior,
+              courseId: String(f.get("courseId") ?? "") || undefined,
               activity: String(f.get("activity")) as FocusActivity,
               subtasks: String(f.get("subtasks"))
                 .split("\n")
@@ -191,7 +198,7 @@ export function EditorDialog({
                 Associated room
                 <select
                   name="room"
-                  defaultValue={editor.value?.room ?? "personal-study"}
+                  defaultValue={editor.value?.room ?? defaultRoom}
                 >
                   <option value="personal-study">Personal Study</option>
                   <option value="grand-library">Grand Library</option>
@@ -199,11 +206,35 @@ export function EditorDialog({
                 </select>
               </label>
               <label>
+                Course / scientific project
+                <select
+                  name="courseId"
+                  defaultValue={editor.value?.courseId ?? ""}
+                >
+                  <option value="">Ungrouped</option>
+                  {courses?.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
                 Activity
                 <select
                   name="activity"
-                  defaultValue={editor.value?.activity ?? "ai-engineering"}
+                  defaultValue={
+                    editor.value?.activity ??
+                    (defaultRoom === "observatory"
+                      ? "astronomy-learning"
+                      : "ai-engineering")
+                  }
                 >
+                  {scienceKinds.map((k) => (
+                    <option key={k} value={k}>
+                      {scienceLabels[k]}
+                    </option>
+                  ))}
                   <option value="system-design">System Design</option>
                   <option value="ai-engineering">AI / coding</option>
                   <option value="outreach">Recruiter outreach</option>

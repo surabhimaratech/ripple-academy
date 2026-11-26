@@ -20,7 +20,10 @@ it("every room has reachable session furniture and mutually connected activities
         `${definition.id}: ${activity.id}`,
       ).not.toBeNull();
       for (const other of definition.config.activities)
-        expect(nav.path(activity.point, other.point)).not.toBeNull();
+        expect(
+          nav.path(activity.point, other.point),
+          `${definition.id}: ${activity.id} -> ${other.id}`,
+        ).not.toBeNull();
     }
   }
 });

@@ -1,9 +1,23 @@
+import { scienceActivity, scienceIntent } from "../domain/science";
 import type { FocusSegment } from "../domain/focus";
 import type { Interior } from "../domain/sessions";
 /** Explicit Study focus intent takes priority over ambient and legacy activity plans. */
 export function focusPlan(room: Interior, focus?: FocusSegment) {
-  if (room !== "personal-study" || !focus || focus.status === "ready")
+  if (
+    !focus ||
+    focus.status === "ready" ||
+    room !== (focus.room ?? "personal-study")
+  )
     return undefined;
+  if (room === "observatory")
+    return {
+      activity:
+        focus.phase !== "focus"
+          ? "observatory-rest"
+          : scienceActivity(scienceIntent(focus.activity)),
+      paused: focus.status === "paused",
+    };
+  if (room !== "personal-study") return undefined;
   const activity =
     focus.phase !== "focus"
       ? "study-tea"

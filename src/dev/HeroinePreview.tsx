@@ -1,3 +1,5 @@
+import { scientificSurfaces } from "../game/scientificSurfaces";
+import { observatoryProps, telescopeContact } from "../game/observatory";
 import { RewardSequence } from "../game/rewardSequence";
 import { rewardKinds, type RewardKind } from "../domain/rewards";
 import { cafeProps } from "../game/cafe";
@@ -338,7 +340,10 @@ export default function HeroinePreview() {
           : undefined;
         this.view.render(pose, placement, delta / 1000, o.reduced, name);
         const cameraAnchor =
-          (room === "personal-study" || room === "happy-cafe") && !o.replay
+          (room === "personal-study" ||
+            room === "happy-cafe" ||
+            room === "observatory") &&
+          !o.replay
             ? furnitureForActivity(o.entry.activity)
             : undefined;
         this.cameras.main
@@ -349,12 +354,57 @@ export default function HeroinePreview() {
               ? cameraAnchor
                 ? cameraAnchor.contact.y - 58 * cameraAnchor.scale
                 : placement.y -
-                  (o.entry.room === "personal-study"
+                  (o.entry.room === "personal-study" ||
+                  o.entry.room === "observatory" ||
+                  o.entry.room === "happy-cafe"
                     ? 58 * (placement.scale ?? 1)
                     : 55)
               : 360,
           );
         this.guide.clear();
+        const scopeContact =
+          room === "observatory" && placement.key === "obs-telescope"
+            ? {
+                eye: {
+                  x:
+                    placement.x +
+                    telescopeContact.eyeOffset.x * (placement.scale ?? 1),
+                  y:
+                    placement.y +
+                    telescopeContact.eyeOffset.y * (placement.scale ?? 1),
+                },
+                hand: {
+                  x:
+                    placement.x +
+                    telescopeContact.handOffset.x * (placement.scale ?? 1),
+                  y:
+                    placement.y +
+                    telescopeContact.handOffset.y * (placement.scale ?? 1),
+                },
+                eyepiece: telescopeContact.eyepiece,
+                control: telescopeContact.control,
+                foot: { x: placement.x, y: placement.y },
+                support: "floor",
+              }
+            : undefined;
+        if (o.guides && scopeContact) {
+          this.guide
+            .lineStyle(1, 0xffd27a)
+            .strokeCircle(scopeContact.eyepiece.x, scopeContact.eyepiece.y, 5);
+          this.guide
+            .lineStyle(1, 0x70f0cf)
+            .strokeCircle(scopeContact.eye.x, scopeContact.eye.y, 3)
+            .lineBetween(
+              scopeContact.eye.x,
+              scopeContact.eye.y,
+              scopeContact.eyepiece.x,
+              scopeContact.eyepiece.y,
+            );
+          this.guide
+            .lineStyle(1, 0xe69fd4)
+            .strokeCircle(scopeContact.hand.x, scopeContact.hand.y, 4)
+            .strokeCircle(scopeContact.control.x, scopeContact.control.y, 5);
+        }
         if (o.guides) {
           this.guide
             .lineStyle(1, 0x8bdccf, 0.8)
@@ -438,6 +488,23 @@ export default function HeroinePreview() {
                   );
               }
             }
+          if (d.id === "observatory")
+            for (const prop of observatoryProps) {
+              this.guide
+                .lineStyle(2, 0xf5cd85)
+                .strokeCircle(prop.anchor.x, prop.anchor.y, 6);
+              if ("foreground" in prop && prop.foreground) {
+                const f = prop.foreground;
+                this.guide
+                  .lineStyle(1, 0xf39887)
+                  .strokeRect(
+                    prop.x - prop.w / 2 + f.x * prop.w,
+                    prop.y - prop.h + f.y * prop.h,
+                    f.w * prop.w,
+                    f.h * prop.h,
+                  );
+              }
+            }
           this.guide.fillStyle(0x8ed5c8, 0.9);
           for (const a of d.config.activities) {
             this.guide
@@ -509,6 +576,11 @@ export default function HeroinePreview() {
                 currentActivity?.id ?? o.entry.activity,
                 placement,
                 {
+                  scientificSurfaces:
+                    d.id === "observatory" ? scientificSurfaces : undefined,
+                  telescopeContacts: scopeContact,
+                  observatoryLayers:
+                    d.id === "observatory" ? observatoryProps : undefined,
                   walkableBounds: d.config.bounds,
                   collisionPolygons: d.config.obstacles.map((r) => [
                     { x: r.x, y: r.y },

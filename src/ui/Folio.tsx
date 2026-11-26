@@ -7,6 +7,7 @@ import { useState } from "react";
 import type { State, Action, Quest, Reward, Discovery } from "../domain/model";
 import { keepsakes, unlockedKeepsakes } from "../domain/keepsakes";
 export type Tab =
+  | "observations"
   | "focus"
   | "sessions"
   | "curriculum"
@@ -21,6 +22,7 @@ export type Editor =
   | { kind: "reward"; value?: Reward }
   | { kind: "discovery"; value?: Discovery };
 export const tabs: { id: Tab; label: string; icon: string }[] = [
+  { id: "observations", label: "Observation journal", icon: "☾" },
   { id: "focus", label: "Focus timer", icon: "◴" },
   { id: "sessions", label: "Activities", icon: "✦" },
   { id: "curriculum", label: "Curriculum", icon: "▥" },
@@ -260,7 +262,7 @@ export function FolioContent({
             + Add discovery
           </button>
         </div>
-        {!state.discoveries?.length && (
+        {!state.discoveries?.filter((d) => !d.observation).length && (
           <div className="empty illustration-empty">
             <span>✧</span>
             <p>What caught your curiosity today?</p>
@@ -270,37 +272,39 @@ export function FolioContent({
             </p>
           </div>
         )}
-        {state.discoveries?.map((d) => (
-          <article className="entry" key={d.id}>
-            <span className="subject">
-              {new Date(d.at).toLocaleDateString()}
-            </span>
-            <h3>{d.title}</h3>
-            <p className="discovery-body">{d.body}</p>
-            <div className="entry-actions">
-              <button
-                className="text-button"
-                disabled={busy}
-                onClick={() => edit({ kind: "discovery", value: d })}
-              >
-                Edit
-              </button>
-              <button
-                className="text-button"
-                disabled={busy}
-                onClick={() => {
-                  if (confirm("Remove this discovery note?"))
-                    void act(
-                      { type: "deleteDiscovery", id: d.id },
-                      "Discovery removed.",
-                    );
-                }}
-              >
-                Delete
-              </button>
-            </div>
-          </article>
-        ))}
+        {state.discoveries
+          ?.filter((d) => !d.observation)
+          .map((d) => (
+            <article className="entry" key={d.id}>
+              <span className="subject">
+                {new Date(d.at).toLocaleDateString()}
+              </span>
+              <h3>{d.title}</h3>
+              <p className="discovery-body">{d.body}</p>
+              <div className="entry-actions">
+                <button
+                  className="text-button"
+                  disabled={busy}
+                  onClick={() => edit({ kind: "discovery", value: d })}
+                >
+                  Edit
+                </button>
+                <button
+                  className="text-button"
+                  disabled={busy}
+                  onClick={() => {
+                    if (confirm("Remove this discovery note?"))
+                      void act(
+                        { type: "deleteDiscovery", id: d.id },
+                        "Discovery removed.",
+                      );
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            </article>
+          ))}
       </>
     );
   if (tab === "keepsakes")

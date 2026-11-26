@@ -1731,3 +1731,89 @@ body:has(.study-focus-mode) {
 .ambient-view .cafe-shortcuts {
   display: none;
 }
+.observatory-room .library {
+  inset: auto;
+  top: 0;
+  left: 50%;
+  height: 100%;
+  width: auto;
+  aspect-ratio: 16/9;
+  max-width: 100%;
+  transform: translateX(-50%);
+}
+.observatory-room .activity-indicator {
+  top: 140px;
+  bottom: auto;
+  max-width: 300px;
+}
+.observatory-room .study-focus-strip {
+  left: auto;
+  transform: none;
+  flex-wrap: wrap;
+  right: 24px;
+  bottom: 50px;
+  top: auto;
+  max-width: 310px;
+}
+.observatory-room .game-stage {
+  background: #09131b;
+}
+.observatory-shortcuts {
+  position: absolute;
+  right: 24px;
+  top: 22px;
+  display: flex;
+  gap: 8px;
+  z-index: 5;
+  flex-wrap: wrap;
+  max-width: 370px;
+  justify-content: flex-end;
+}
+.ambient-view .observatory-shortcuts {
+  display: none;
+}
+.observation-journal .discovery-body {
+  overflow-wrap: anywhere;
+}
+.observation-form {
+  padding: 16px;
+  border: 1px solid #66858b;
+  margin: 18px 0;
+}
+.observation-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 12px 0;
+}
+.observatory-shortcuts small {
+  flex-basis: 100%;
+  color: #bfced5;
+  text-align: right;
+  font-size: 12px;
+}
+.observatory-room .study-focus-strip > div {
+  min-width: 0;
+  width: 100%;
+}
+.observatory-room .study-focus-strip > div > strong {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.observatory-room .session-indicator {
+  top: 240px;
+  left: 24px;
+  transform: none;
+  min-width: 0;
+  width: 300px;
+}
+.study-focus-mode .observatory-shortcuts,
+.study-focus-mode.observatory-room .session-indicator {
+  display: none;
+}
+.ambient-view.observatory-room .activity-indicator {
+  display: none;
+}
+.ambient-view.observatory-room .session-indicator {
+  display: none;
+}
